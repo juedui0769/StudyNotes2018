@@ -7,7 +7,7 @@
 
 ### dubbo-samples-api
 
-按照[dubbo|github官网](https://github.com/apache/incubator-dubbo)上的Getting started，克隆官方样例。
+按照  [dubbo|github官网](https://github.com/apache/incubator-dubbo)  上的Getting started，克隆官方样例。
 
 ```shell
 # git clone https://github.com/dubbo/dubbo-samples.git
@@ -21,7 +21,7 @@
 
 子模块很多，`dubbo-samples-api`就是官方推荐的第一个样例。
 
-按照官方的说法，在命令行中输入一下命令启动测试：
+按照官方的说法，在命令行中输入以下命令启动测试：
 
 ```shell
 mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.provider.Application exec:java
@@ -39,7 +39,15 @@ mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.co
 
 如上图，`dubbo-samples-api`有三个包`api`，`provider`，`consumer`，`GreetingsService`是接口，`GreetingsServiceImpl`是实现，两个`Application`分别是`provider`和`consumer`的启动类。
 
-1） 先看看`provider`中`Application`类的代码：
+##### api
+
+没什么好研究的，就一个接口`GreetingsService`
+
+##### provider
+
+`GreetingsServiceImpl`是接口`GreetingsService`的实现；
+
+`Application`是启动类，代码如下：
 
 ```java
 public class Application {
@@ -56,122 +64,170 @@ public class Application {
 }
 ```
 
-2）ServiceConfig
 
-![](./imgs/113_dubbo_003_ServiceConfig.png)
+![](./imgs/113_dubbo_AbstractConfig.png)
 
-`ServiceConfig`位于`com.alibaba.dubbo.config`包下，它有一系列的抽象父类，都位于`com.alibaba.dubbo.config`包下，如上图。
+`ApplicationConfig`，`RegistryConfig`，`ServiceConfig`都是继承自`AbstractConfig`，如上图。
 
-3） 首先来看看位于最顶层的`AbstractConfig`，方法很多看得头疼（慢慢研究吧），先贴上看得到的重要属性，下面这个表格中的属性，应该是新旧版本`Properties`的映射。
+![](./imgs/113_dubbo_ServiceConfig_doExportUrlsFor1Protocol.png)
 
-| 旧                     | 新                                 |
-| ---------------------- | ---------------------------------- |
-| dubbo.protocol.name    | dubbo.service.protocol             |
-| dubbo.protocol.host    | dubbo.service.server.host          |
-| dubbo.protocol.port    | dubbo.service.server.port          |
-| dubbo.protocol.threads | dubbo.service.max.thread.pool.size |
-| dubbo.consumer.timeout | dubbo.service.invoke.timeout       |
-| dubbo.consumer.retries | dubbo.service.max.retry.providers  |
-| dubbo.consumer.check   | dubbo.service.allow.no.provider    |
-| dubbo.service.url      | dubbo.service.address              |
+配置属性都在`ServiceConfig.doExportUrlsFor1Protocol`方法中组装，如上图，`11`个属性添加到`map`中了：
 
-4） `AbstractMethodConfig`
+| 属性        | 值                                           |
+| ----------- | -------------------------------------------- |
+| side        | provider                                     |
+| bind.ip     | 192.168.56.102                               |
+| application | first-dubbo-provider                         |
+| methods     | sayHello                                     |
+| dubbo       | 2.0.2                                        |
+| pid         | 6404                                         |
+| interface   | org.apache.dubbo.samples.api.GreetingService |
+| generic     | false                                        |
+| bind.port   | 20880                                        |
+| timestamp   | 1544609109601                                |
+| anyhost     | true                                         |
 
-| 属性名      | 描述                                                         |
-| ----------- | ------------------------------------------------------------ |
-| timeout     | timeout for remote invocation in milliseconds                |
-| retries     | retry times                                                  |
-| actives     | max concurrent invocations                                   |
-| loadbalance | load balance                                                 |
-| async       | whether to async                                             |
-| sent        | whether to ack async-sent                                    |
-| mock        | the name of mock class which gets called when a service fails to execute |
-| merger      | merger                                                       |
-| cache       | cache                                                        |
-| validation  | validation                                                   |
+![](./imgs/113_dubbo_ServiceConfig_doExportUrlsFor1Protocol_url.png)
+
+`url`，如上图，内容很长，完整内容展示在下面：
+
+> dubbo://192.168.56.102:20880/org.apache.dubbo.samples.api.GreetingsService?anyhost=true&application=first-dubbo-provider&bind.ip=192.168.56.102&bind.port=20880&dubbo=2.0.2&generic=false&interface=org.apache.dubbo.samples.api.GreetingsService&methods=sayHello&pid=6404&side=provider&timestamp=1544609109601
+
+![](./imgs/113_dubbo_ServiceConfig_providerModel.png)
+
+`providerModel`，如上图，一个`ProviderModel`就代表一个接口吧？！
+
+| 属性            | 值                                            |
+| --------------- | --------------------------------------------- |
+| serviceName     | org.apache.dubbo.samples.api.GreetingsService |
+| serviceInstance | GreetingsServiceImpl@1219                     |
+| metadata        | ...                                           |
+| methods         | sayHello                                      |
+
+![](./imgs/113_dubbo_ApplicationModel_initProviderModel.png)
+
+承上，把`serviceName`和`providerModel`添加到`ConcurrentHashMap providedServices`中后，dubbo会向控制台输出"already register the provider service: org.apache.dubbo.samples.api.GreetingsService"。
+
+----
+
+
+
+至此，对provider端的代码总算是有了一定的认识：
+
+- 主要是创建`ServiceConfig`实例，然后设置不可或缺的属性
+  - setApplication
+  - setRegistry
+  - setInterface
+  - setRef
+- 重点是`ServiceConfig.export()`，这个方法的细节，上面有截图阐述。
 
 ```java
-public void setLoadbalance(String loadbalance) {
-	checkExtension(LoadBalance.class, "loadbalance", loadbalance);
-	this.loadbalance = loadbalance;
+public class Application {
+    public static void main(String[] args) throws IOException {
+        ServiceConfig<GreetingsService> service = new ServiceConfig<>();
+        service.setApplication(new ApplicationConfig("first-dubbo-provider"));
+        service.setRegistry(new RegistryConfig("multicast://224.5.6.7:1234"));
+        service.setInterface(GreetingsService.class);
+        service.setRef(new GreetingsServiceImpl());
+        service.export();
+        System.out.println("first-dubbo-provider is running.");
+        System.in.read();
+    }
 }
-
-@Parameter(escaped = true)
-public String getMock() {
-	return mock;
-}
-
-public void setMock(Boolean mock) {
-	if (mock == null) {
-		setMock((String) null);
-	} else {
-		setMock(String.valueOf(mock));
-	}
-}
-
-public void setMock(String mock) {
-	if (mock != null && mock.startsWith(Constants.RETURN_PREFIX)) {
-		checkLength("mock", mock);
-	} else {
-		checkName("mock", mock);
-	}
-	this.mock = mock;
-}
-
 ```
 
-其他属性是正常的getter、setter，上面是添加了“调料”的getter、setter。
+##### consumer
 
-5） `AbstractInterfaceConfig`
+`Application`是启动类，代码如下：
 
-| 属性                              | 描述                                                         |
-| --------------------------------- | ------------------------------------------------------------ |
-| String local                      | local impl class name for the service interface              |
-| String stub                       | local stub class name for the service interface              |
-| MonitorConfig monitor             | service monitor                                              |
-| String proxy                      | proxy type                                                   |
-| String cluster                    | cluster type                                                 |
-| String filter                     | filter                                                       |
-| String listener                   | listener                                                     |
-| String owner                      | owner                                                        |
-| Integer connections               | connection limits, 0 means shared connection, otherwise it defines the connections delegated to the current service |
-| String layer                      | layer                                                        |
-| ApplicationConfig application     | application info                                             |
-| ModuleConfig module               | module info                                                  |
-| `List<RegistryConfig> registries` | registry centers                                             |
-| String onconnect                  | connection events                                            |
-| String ondisconnect               | disconnection events                                         |
-| Integer callbacks                 | callback limits                                              |
-| String scope                      | the scope for referring/exporting a service, if it's local, it means searching in current JVM only. |
+```java
+public class Application {
+    public static void main(String[] args) {
+        ReferenceConfig<GreetingsService> reference = new ReferenceConfig<>();
+        reference.setApplication(new ApplicationConfig("first-dubbo-consumer"));
+        reference.setRegistry(new RegistryConfig("multicast://224.5.6.7:1234"));
+        reference.setInterface(GreetingsService.class);
+        GreetingsService greetingsService = reference.get();
+        String message = greetingsService.sayHello("dubbo");
+        System.out.println(message);
+    }
+}
+```
 
-`AbstractInterfaceConfig`包含一些重要的逻辑，稍后慢慢品尝！
+核心类是`ReferenceConfig`，同provider中的`ServiceConfig`一样，都位于`com.alibaba.dubbo.config`包下。它们有很多共同点，如下图：
 
-6） `AbstractServiceConfig`
-
-| 属性                             | 描述                                                         |
-| -------------------------------- | ------------------------------------------------------------ |
-| String version                   | version                                                      |
-| String group                     | group                                                        |
-| Boolean deprecated               | whether the service is deprecated                            |
-| Integer delay                    | delay service exporting                                      |
-| Boolean export                   | whether to export the service                                |
-| Integer weight                   | weight                                                       |
-| String document                  | document center                                              |
-| Boolean dynamic                  | whether to register as a dynamic service or not on register center |
-| String token                     | whether to use token                                         |
-| String accesslog                 | access log                                                   |
-| `List<ProtocolConfig> protocols` |                                                              |
-| Integer executes                 | max allowed execute times                                    |
-| Boolean register                 | whether to register                                          |
-| Integer warmup                   | warm up period                                               |
-| String serialization             | serialization                                                |
-
-7） 再来看看`ServiceConfig`
+![](./imgs/113_dubbo_ReferenceConfig.png)
 
 
 
+![](./imgs/113_dubbo_ReferenceConfig_refprotocol.png)
+
+如上图，`ReferenceConfig`中的`refprotocol`，`cluster`
+
+- `refprotocol` ： Protocol$Adaptive
+- `cluster` ： Cluster$Adaptive
+
+带有`$Adaptive`的类都是`dubbo`合成的类。
+
+![](./imgs/113_dubbo_ReferenceConfig_init.png)
+
+在`ReferenceConfig`中，最主要的方法是`init()`，如上图，`map`的填充就是在这个方法中完成的：
+
+| 属性        | 值                                            |
+| ----------- | --------------------------------------------- |
+| side        | consumer                                      |
+| application | first-dubbo-consumer                          |
+| register.ip | 192.168.56.102                                |
+| methods     | sayHello                                      |
+| dubbo       | 2.0.2                                         |
+| pid         | 7336                                          |
+| interface   | org.apache.dubbo.samples.api.GreetingsService |
+| timestamp   | 1544632199520                                 |
+
+`init()`方法中还有对其他重要方法的调用~
+
+![](./imgs/113_dubbo_ReferenceConfig_createProxy.png)
+
+`createProxy()` ： ……
+
+tmpUrl
+
+> temp://localhost?application=first-dubbo-consumer&dubbo=2.0.2&interface=org.apache.dubbo.samples.api.GreetingsService&methods=sayHello&pid=7336&register.ip=192.168.56.102&side=consumer&timestamp=1544632199520
+
+> multicast://224.5.6.7:1234/com.alibaba.dubbo.registry.RegistryService?application=first-dubbo-consumer&dubbo=2.0.2&pid=7336&timestamp=1544632836595
+
+> registry://224.5.6.7:1234/com.alibaba.dubbo.registry.RegistryService?application=first-dubbo-consumer&dubbo=2.0.2&pid=7336&registry=multicast&timestamp=1544632836595
 
 
+
+![](./imgs/113_dubbo_ReferenceConfig_ConsumerModel.png)
+
+如上图，`ConsumerModel`应该是和`ProviderModel`相对应的。
+
+----
+
+因为先对`provider`进行过探索，再探索`consumer`会轻松很多。provider是`ServiceConfig`，consumer是`ReferenceConfig`。
+
+- `setApplication()`
+- `setRegistry()`
+- `setInterface()`
+- `get()`
+
+重点是`ReferenceConfig.init()`，重要的逻辑都在这个方法中实现，或者是在这个方法中被调用。
+
+```java
+public class Application {
+    public static void main(String[] args) {
+        ReferenceConfig<GreetingsService> reference = new ReferenceConfig<>();
+        reference.setApplication(new ApplicationConfig("first-dubbo-consumer"));
+        reference.setRegistry(new RegistryConfig("multicast://224.5.6.7:1234"));
+        reference.setInterface(GreetingsService.class);
+        GreetingsService greetingsService = reference.get();
+        String message = greetingsService.sayHello("dubbo");
+        System.out.println(message);
+    }
+}
+```
 
 
 
