@@ -388,7 +388,7 @@ public final class EchoServer {
 - `FactorialClientHandler`, `FactorialServerHandler` 分别是客户端和服务端的handler。
 - `FactorialClientInitializer`,`FactorialServerInitializer` 上面的编解码处理器及handler分别在这两个类中被引入，另在这两个类中还处理`SSL`，及压缩`ZlibCodecFactory`。类图如下：
 
-![](F:\Docs\101_Me\imgs\106_netty_example_factorial.jpg)
+![](./imgs/106_netty_example_factorial.jpg)
 
 计算时，先将`FactorialServer` 服务端启动，然后启动`FactorialClient`客户端，输入要计算的值，比如`10`就在`VM options`中输入`-Dcount=10`，再点击启动。
 
@@ -535,7 +535,7 @@ private void sendNumbers() {
 
 这个样例没有看懂，先把类图放在这里吧。
 
-![](F:\Docs\101_Me\imgs\106_netty_example_file02.png)
+![](./imgs/106_netty_example_file02.png)
 
 在`io.netty.example.file`包中只有两个类，`FileServer`和`FileServerHandler`。但是，`FileServer`中引用了很多netty内部组件：`StringEncoder`, `StringDecoder`, `LineBaseFrameDecoder`, `ChunkedWriteHandler`。
 
@@ -549,7 +549,7 @@ private void sendNumbers() {
 
 和“阶乘”一样的，`Initializer`, `Handler`模式。6个类，如下：
 
-![](F:\Docs\101_Me\imgs\106_netty_example_telnet.jpg)
+![](./imgs/106_netty_example_telnet.jpg)
 
 ```java
 private static final StringDecoder DECODER = new StringDecoder();
@@ -1287,7 +1287,7 @@ public class ChatServer {
 
 ## 07 http cors
 
-![](F:\Docs\101_Me\imgs\106_netty_example_http_cors.png)
+![](./imgs/106_netty_example_http_cors.png)
 
 位于`io.netty.example.http.cors`包下，有三个类
 

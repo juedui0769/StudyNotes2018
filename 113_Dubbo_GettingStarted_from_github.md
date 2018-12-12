@@ -17,7 +17,7 @@
 
 然后，启动`IDEA`将整个工程导入。
 
-![](F:\Docs\101_Me\imgs\113_dubbo_001.png)
+![](./imgs/113_dubbo_001.png)
 
 子模块很多，`dubbo-samples-api`就是官方推荐的第一个样例。
 
@@ -35,7 +35,7 @@ mvn -Djava.net.preferIPv4Stack=true -Dexec.mainClass=org.apache.dubbo.samples.co
 
 #### 简单分析
 
-![](F:\Docs\101_Me\imgs\113_dubbo_002_samples_api.png)
+![](./imgs/113_dubbo_002_samples_api.png)
 
 如上图，`dubbo-samples-api`有三个包`api`，`provider`，`consumer`，`GreetingsService`是接口，`GreetingsServiceImpl`是实现，两个`Application`分别是`provider`和`consumer`的启动类。
 
@@ -58,7 +58,7 @@ public class Application {
 
 2）ServiceConfig
 
-![](F:\Docs\101_Me\imgs\113_dubbo_003_ServiceConfig.png)
+![](./imgs/113_dubbo_003_ServiceConfig.png)
 
 `ServiceConfig`位于`com.alibaba.dubbo.config`包下，它有一系列的抽象父类，都位于`com.alibaba.dubbo.config`包下，如上图。
 

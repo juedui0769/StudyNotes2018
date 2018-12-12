@@ -505,7 +505,7 @@ public class DubboConsumerDemo {
 
 ## 05 ✓ 类图
 
-![](F:\Docs\101_Me\imgs\112_dubbo_helloworld.png)
+![](./imgs/112_dubbo_helloworld.png)
 
 如上图，三个模块，其实只编写了六个类。大量的逻辑在配置文件和注解中。
 
@@ -519,9 +519,9 @@ public class DubboConsumerDemo {
 
 文字描述有些苍白，来看看下面两张截图吧：
 
-![](F:\Docs\101_Me\imgs\112_dubbo_springboot_error001.png)
+![](./imgs/112_dubbo_springboot_error001.png)
 
-![](F:\Docs\101_Me\imgs\112_dubbo_springboot_error003.png)
+![](./imgs/112_dubbo_springboot_error003.png)
 
 下图是注释掉`groupId`时的情形，上图是正确的。现在我没法重现之前的情形了，一开始，pom.xml文件中就没有`groupId`这一行，所以，上图中的`Dependencies`就没有。
 

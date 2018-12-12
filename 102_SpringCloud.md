@@ -26,7 +26,7 @@
   - 通知仓储中心，发货
   - 给用户的这次购物增加相应的积分
 
-![](F:\Docs\101_Me\imgs\102_SpringCloud_001.jpg)
+![](./imgs/102_SpringCloud_001.jpg)
 
 如上图：
 
