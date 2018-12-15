@@ -305,7 +305,85 @@ META-INF
 
 
 
+# 官方解释
 
+在 http://dubbo.apache.org/zh-cn/blog/dubbo-101.html 可以找到`第一个样例`的解释，摘抄如下：
+
+### 实现 Dubbo 服务提供方
+
+```java
+public class Application {
+    public static void main(String[] args) throws IOException {
+        ServiceConfig<GreetingsService> service = new ServiceConfig<>(); // #1
+        service.setApplication(new ApplicationConfig("first-dubbo-provider")); // #2
+        service.setRegistry(new RegistryConfig("multicast://224.5.6.7:1234")); // #3
+        service.setInterface(GreetingsService.class); // #4
+        service.setRef(new GreetingsServiceImpl()); // #5
+        service.export(); // #6
+        System.in.read(); // #7
+    }
+}
+```
+
+**说明**：
+
+1. 创建一个 *ServiceConfig* 的实例，泛型参数信息是服务接口类型，即 *GreetingsService*。
+2. 生成一个 *AplicatonConfig* 的实例，并将其装配进 *ServiceConfig*。
+3. 生成一个 *RegistryConfig* 实例，并将其装配进 *ServiceConfig*，这里使用的是组播方式，参数是 `multicast://224.5.6.7:1234`。合法的组播地址范围为：*224.0.0.0 - 239.255.255.255*
+4. 将服务契约 *GreetingsService* 装配进 *ServiceConfig*。
+5. 将服务提供者提供的实现 *GreetingsServiceImpl* 的实例装配进 *ServiceConfig*。
+6. *ServiceConfig* 已经具备足够的信息，开始对外暴露服务，默认监听端口是 *20880*。
+7. 为了防止服务端退出，按任意键或者 *ctrl-c* 退出。
+
+> 新学到知识：合法的组播地址范围为：*224.0.0.0 - 239.255.255.255*
+
+### 实现 Dubbo 服务调用方
+
+```java
+public class Application {
+    public static void main(String[] args) {
+        ReferenceConfig<GreetingsService> reference = new ReferenceConfig<>(); // #1
+        reference.setApplication(new ApplicationConfig("first-dubbo-client")); // #2
+        reference.setRegistry(new RegistryConfig("multicast://224.5.6.7:1234")); // #3
+        reference.setInterface(GreetingsService.class); // #4
+        GreetingsService greetingsService = reference.get(); // #5
+        String message = greetingsService.sayHi("dubbo"); // #6
+        System.out.println(message); // #7
+    }
+}
+```
+
+**说明**：
+
+1. 创建一个 *ReferenceConfig* 的实例，同样，泛型参数信息是服务接口类型，即 *GreetingService*。
+2. 生成一个 *AplicatonConfig* 的实例，并将其装配进 *ReferenceConfig*。
+3. 生成一个 *RegistryConfig* 实例，并将其装配进 *ReferenceConfig*，注意这里的组播地址信息需要与服务提供方的相同。
+4. 将服务契约 *GreetingsService* 装配进 *ReferenceConfig*。
+5. 从 *ReferenceConfig* 中获取到 *GreetingService* 的代理。
+6. 通过 *GreetingService* 的代理发起远程调用，传入的参数为 *dubbo*。
+7. 打印返回结果 *hi, dubbo*。
+
+
+
+# start.dubbo.io
+
+http://start.dubbo.io/
+
+， 类似 Spring Initializr ：  https://start.spring.io/
+
+，http://dubbo.apache.org/zh-cn/blog/dubbo-101.html 上有解释，如何使用 start.dubbo.io 。
+
+启动，之后，可以`telnet`
+
+```shell
+telnet localhost 22222
+```
+
+- help
+- ls
+- online
+- offline
+- quit
 
 
 
