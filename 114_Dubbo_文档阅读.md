@@ -405,7 +405,7 @@ http://dubbo.apache.org/zh-cn/docs/user/demos/preflight-check.html
 
 # incubator-dubbo-samples
 
-## dubbo-samples-annotation
+## 01 dubbo-samples-annotation
 
 https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-annotation
 
@@ -435,6 +435,968 @@ src
 ```
 
 本示例，有两种启动方式，一种是`config`方式，一种是`annotation`方式。
+
+## 02 dubbo-samples-api
+
+参考： [./113_Dubbo_dubbo-samples-api.md](./113_Dubbo_dubbo-samples-api.md)
+
+
+
+## 03 dubbo-samples-async
+
+这个样例有点复杂啊，重点在三个文件：
+
+- async-consumer.xml
+- async-provider.xml
+- AsyncConsumer.java
+
+**async-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="async-provider"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <bean id="asyncService" class="org.apache.dubbo.samples.async.impl.AsyncServiceImpl"/>
+
+    <dubbo:service interface="org.apache.dubbo.samples.async.api.AsyncService" ref="asyncService"/>
+
+</beans>
+```
+
+**async-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="async-consumer">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:reference id="asyncService" interface="org.apache.dubbo.samples.async.api.AsyncService">
+        <dubbo:method name="goodbye" async="true"/>
+
+        <dubbo:method name="invokeCallback" async="true" onreturn="notify.onreturn"/>
+    </dubbo:reference>
+
+    <bean id="notify" class="org.apache.dubbo.samples.async.api.Callback"/>
+</beans>
+```
+
+**AsyncConsumer.java**
+
+```java
+public class AsyncConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/async-consumer.xml"});
+        context.start();
+
+        final AsyncService service = (AsyncService) context.getBean("asyncService");
+
+        Future<String> f = RpcContext.getContext().asyncCall(new Callable<String>() {
+            public String call() throws Exception {
+                return service.sayHello("async call request");
+            }
+        });
+
+        System.out.println("async call ret :" + f.get());
+
+
+        RpcContext.getContext().asyncCall(new Runnable() {
+            public void run() {
+                service.sayHello("oneway call request1");
+                service.sayHello("oneway call request2");
+            }
+        });
+
+        service.goodbye("samples");
+        Future<String> future = RpcContext.getContext().getFuture();
+        String result = future.get();
+        System.out.println(" << " + result);
+
+        service.invokeCallback("kongming");
+
+        System.in.read();
+    }
+
+}
+```
+
+**RpcContext**
+
+`RpcContext`，这个类，值得看看源码的。
+
+
+
+## 04 dubbo-samples-attachment
+
+阅读了`dubbo-samples-annotation`，`dubbo-samples-async`…… ，再看`dubbo-samples-attachment`的结构，发现清晰了很多。
+
+`dubbo-samples-attachment`也使用spring，xml，的方式来启动的。代码可前往github一观： https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-attachment
+
+> 可以通过 RpcContext 上的 setAttachment 和 getAttachment 在服务消费方和提供方之间进行参数的隐式传递。
+
+不过，只能传递`String`类型的参数。
+
+```java
+private final Map<String, String> attachments = new HashMap<String, String>();
+
+public RpcContext setAttachment(String key, String value) {
+	if (value == null) {
+		attachments.remove(key);
+	} else {
+		attachments.put(key, value);
+	}
+	return this;
+}
+
+public String getAttachment(String key) {
+	return attachments.get(key);
+}
+```
+
+
+
+## 05 dubbo-samples-basic
+
+
+
+**dubbo-demo-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- provider's application name, used for tracing dependency relationship -->
+    <dubbo:application name="demo-provider"/>
+
+    <!-- use multicast registry center to export service -->
+    <dubbo:registry group="aaa" address="zookeeper://127.0.0.1:2181"/>
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+    <!--<dubbo:registry address="zookeeper://11.163.250.27:2181"/>-->
+
+    <!-- use dubbo protocol to export service on port 20880 -->
+    <dubbo:protocol name="dubbo" port="20890"/>
+
+    <!-- service implementation, as same as regular local bean -->
+    <bean id="demoService" class="org.apache.dubbo.samples.basic.impl.DemoServiceImpl"/>
+
+    <!-- declare the service interface to be exported -->
+    <dubbo:service interface="org.apache.dubbo.samples.basic.api.DemoService" ref="demoService"/>
+
+</beans>
+```
+
+如果将`group="aaa"` 修改为`group="bbb"`，那么consumer就找不到，注册服务了。
+
+**dubbo-demo-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- consumer's application name, used for tracing dependency relationship (not a matching criterion),
+    don't set it same as provider -->
+    <dubbo:application name="demo-consumer">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <!-- use multicast registry center to discover service -->
+    <dubbo:registry group="aaa" address="zookeeper://127.0.0.1:2181"/>
+
+    <!-- generate proxy for the remote service, then demoService can be used in the same way as the
+    local regular interface -->
+    <dubbo:reference id="demoService" check="false" interface="org.apache.dubbo.samples.basic.api.DemoService"/>
+
+</beans>
+```
+
+
+
+## 06 dubbo-samples-cache
+
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-cache
+
+这个例子，没怎么看懂！
+
+需要，复习，思考！
+
+LRU
+
+AtomicInteger
+
+**CacheConsumer.java**
+
+```java
+public class CacheConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/cache-consumer.xml"});
+        context.start();
+
+        CacheService cacheService = (CacheService) context.getBean("cacheService");
+
+        // verify cache, same result is returned for different invocations (in fact, the return value increases
+        // on every invocation on the server side)
+        String fix = null;
+        for (int i = 0; i < 5; i++) {
+            String result = cacheService.findCache("0");
+            if (fix == null || fix.equals(result)) {
+                System.out.println("OK: " + result);
+            } else {
+                System.err.println("ERROR: " + result);
+            }
+            fix = result;
+            Thread.sleep(500);
+        }
+
+        // default cache.size is 1000 for LRU, should have cache expired if invoke more than 1001 times
+        for (int n = 0; n < 1001; n++) {
+            String pre = null;
+            for (int i = 0; i < 10; i++) {
+                String result = cacheService.findCache(String.valueOf(n));
+                if (pre != null && !pre.equals(result)) {
+                    System.err.println("ERROR: " + result);
+                }
+                pre = result;
+            }
+        }
+
+        // verify if the first cache item is expired in LRU cache
+        String result = cacheService.findCache("0");
+        if (fix != null && !fix.equals(result)) {
+            System.out.println("OK: " + result);
+        } else {
+            System.err.println("ERROR: " + result);
+        }
+    }
+
+}
+```
+
+这段代码逻辑，没看懂~！这里的用法应该就是`cache`的含义吧？！
+
+
+
+
+## 07 dubbo-samples-callback
+
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-callback
+
+这个例子，没怎么看懂！
+
+需要，复习，思考！
+
+**callback-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="callback-provider"/>
+
+    <!--<dubbo:registry address="multicast://224.5.6.7:1234"/>-->
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <bean id="callbackService" class="org.apache.dubbo.samples.callback.impl.CallbackServiceImpl"/>
+
+    <dubbo:service interface="org.apache.dubbo.samples.callback.api.CallbackService" ref="callbackService"
+                   connections="1" callbacks="1000">
+        <dubbo:method name="addListener">
+            <dubbo:argument index="1" callback="true"/>
+            <!--<dubbo:argument type="com.demo.CallbackListener" callback="true" />-->
+        </dubbo:method>
+    </dubbo:service>
+
+</beans>
+```
+
+这里provider的配置比之前的例子，增加了很多参数。
+
+**CallbackServiceImpl.java**
+
+```java
+public class CallbackServiceImpl implements CallbackService {
+
+    private final Map<String, CallbackListener> listeners = new ConcurrentHashMap<String, CallbackListener>();
+
+    public CallbackServiceImpl() {
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                while (true) {
+                    try {
+                        for (Map.Entry<String, CallbackListener> entry : listeners.entrySet()) {
+                            try {
+                                entry.getValue().changed(getChanged(entry.getKey()));
+                            } catch (Throwable t) {
+                                listeners.remove(entry.getKey());
+                            }
+                        }
+                        Thread.sleep(5000); // timely trigger change event
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                    }
+                }
+            }
+        });
+        t.setDaemon(true);
+        t.start();
+    }
+
+    public void addListener(String key, CallbackListener listener) {
+        listeners.put(key, listener);
+        listener.changed(getChanged(key)); // send notification for change
+    }
+
+    private String getChanged(String key) {
+        return "Changed: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+    }
+
+}
+```
+
+上面这段代码虽然占了很多行，但是，总体还是比较好懂的。
+
+- 在构造方法中，启动了一个守护线程，
+- 遍历`listeners`这个map对象，来触发`changed()`方法，这个方法来自，自定义接口`CallbackListener`，
+- 在构造方法中还调用了一个私有方法`getChanged()`，这个方法中的内容，是完全可以直接写在构造方法中的，抽取出来只是便于重用和理解而已！
+
+**CallbackConsumer.java**
+
+```java
+public class CallbackConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/callback-consumer.xml"});
+        context.start();
+        CallbackService callbackService = (CallbackService) context.getBean("callbackService");
+        callbackService.addListener("foo.bar", new CallbackListener() {
+            public void changed(String msg) {
+                System.out.println("callback1:" + msg);
+            }
+        });
+        System.in.read();
+    }
+
+}
+```
+
+消费端的代码如上，
+
+
+
+## 08 dubbo-samples-context
+
+
+
+- 上下文中存放的是当前调用过程中所需的环境信息。所有配置信息都将转换为 URL 的参数。
+- RpcContext 是一个 ThreadLocal 的临时状态记录器，当接收到 RPC 请求，或发起 RPC 请求时，RpcContext 的状态都会变化。比如：A 调 B，B 再调 C，则 B 机器上，在 B 调 C 之前，RpcContext 记录的是 A 调 B 的信息，在 B 调 C 之后，RpcContext 记录的是 B 调 C 的信息
+
+
+
+> 以上是，从官网`README`中复制的
+
+有趣的是这两个类：`ContextServiceImpl`，`ContextConsumer`
+
+ContextServiceImpl.java
+
+```java
+public class ContextServiceImpl implements ContextService{
+
+    @Override
+    public String sayHello(String name) {
+
+        boolean isProviderSide = RpcContext.getContext().isProviderSide();
+        String clientIP = RpcContext.getContext().getRemoteHost();
+        String application = RpcContext.getContext().getUrl().getParameter("application");
+
+        return "Hello " + name + ", response from provider: " + RpcContext.getContext().getLocalAddress();
+    }
+}
+```
+
+
+
+ContextConsumer.java
+
+```java
+public class ContextConsumer {
+
+    public static void main(String[] args) {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/dubbo-context-consumer.xml"});
+        context.start();
+        ContextService contextService = (ContextService) context.getBean("demoService"); // get remote service proxy
+
+        String hello = contextService.sayHello("world"); // call remote method
+
+        boolean isConsumerSide = RpcContext.getContext().isConsumerSide();
+        String application = RpcContext.getContext().getUrl().getParameter("application");
+        String serverIP = RpcContext.getContext().getRemoteHost();
+
+        System.out.println(hello); // get result
+
+    }
+}
+```
+
+这个样例，就是`RpcContext`的抛砖引玉，教我们如何使用`RpcContext`的。
+
+- `isProviderSide()`
+- `isConsumerSide()`
+- `getRemoteHost()`
+- `getUrl().getParameter("application")`
+- 
+
+`04 dubbo-samples-attachment`也是需要使用`RpcContext`的。
+
+
+
+
+## 09 dubbo-samples-direct
+
+这个`direct`的含义是，不需要“注册”，直接与远端进行连接吗？
+
+- 目前，我的理解是，不需要“注册”，直连，我将provider.xml修改为`<dubbo:registry address="N/A"/>`，程序仍然正常的。
+
+**dubbo-direct-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- provider's application name, used for tracing dependency relationship -->
+    <dubbo:application name="demo-provider"/>
+
+    <!-- use multicast registry center to export service -->
+    <!--<dubbo:registry address="zookeeper://127.0.0.1:2181"/>-->
+    <dubbo:registry address="N/A"/>
+
+    <!-- use dubbo protocol to export service on port 20880 -->
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <!-- service implementation, as same as regular local bean -->
+    <bean id="directService" class="org.apache.dubbo.samples.direct.impl.DirectServiceImpl"/>
+
+    <!-- declare the service interface to be exported -->
+    <dubbo:service interface="org.apache.dubbo.samples.direct.api.DirectService" ref="directService"/>
+
+</beans>
+```
+
+**dubbo-direct-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- consumer's application name, used for tracing dependency relationship (not a matching criterion),
+    don't set it same as provider -->
+    <dubbo:application name="demo-consumer">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <!-- use multicast registry center to discover service -->
+    <!--<dubbo:registry address="zookeeper://127.0.0.1:2181"/>-->
+
+    <!-- generate proxy for the remote service, then demoService can be used in the same way as the
+    local regular interface -->
+    <dubbo:reference id="directService" check="false" interface="org.apache.dubbo.samples.direct.api.DirectService" url="localhost:20880"/>
+
+</beans>
+```
+
+
+
+
+
+
+
+
+
+
+
+## 10 dubbo-samples-docker
+
+
+
+略，有计划，在docker上测试一下！
+
+
+
+
+
+## 11 dubbo-sampels-echo
+
+- 回声测试用于检测服务是否可用，回声测试按照正常请求流程执行，能够测试整个调用是否通畅，可用于监控。
+- 所有服务自动实现 EchoService 接口，只需将任意服务引用强制转型为 EchoService，即可使用。
+
+> 以上，是从`README`中复制过来的。
+
+任何`service`类都可以被转义为`EchoService`，然后可以调用`$echo(Object)`方法，
+
+**EchoConsumer.java**
+
+```java
+public class EchoConsumer {
+
+    public static void main(String[] args) {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/echo-consumer.xml"});
+        context.start();
+        DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
+
+        EchoService echoService = (EchoService) demoService;
+        String status = (String)echoService.$echo("OK");
+        System.out.println("echo result: " + status);
+    }
+}
+```
+
+
+
+## 12 dubbo-samples-generic
+
+这个和`11 dubbo-samples-echo`有些相似点： 任何`service`也都可以被转义为`GenericService`，然后调用`$invoke(String,String[],Object[])`方法
+
+```sh
+generic
+|- api
+	|- HelloService
+	|- HiService
+	|- IUserService
+	|- Params
+	|- User
+|- impl
+	|- GenericServiceImpl
+	|- UserServiceImpl
+|- APIGenericConsumer
+|- AIPGenericProvider
+|- EmbeddedZooKeeper
+|- GenericConsumer
+|- GenericConsumer2
+|- GenericProvider
+```
+
+`generic-provider.xml`和其他的样例没什么区别，`generic-consumer.xml`有些不同，
+
+**generic-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="generic-consumer">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:reference id="userService" interface="org.apache.dubbo.samples.generic.api.IUserService" generic="true"/>
+
+</beans>
+```
+
+如上，`userService`被声明为`generic="true"`。
+
+
+
+**GenericConsumer.java**
+
+```java
+public class GenericConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/generic-consumer.xml"});
+        context.start();
+        GenericService userService = (GenericService) context.getBean("userService");
+
+        // primary param and return value
+        String name = (String) userService.$invoke("delete", new String[]{int.class.getName()}, new Object[]{1});
+        System.out.println(name);
+
+        String[] parameterTypes = new String[]{"org.apache.dubbo.samples.generic.api.Params"};
+        // sample one
+        Map<String, Object> param = new HashMap<String, Object>();
+        param.put("class", "org.apache.dubbo.samples.generic.api.Params");
+        param.put("query", "a=b");
+        Object user = userService.$invoke("get", parameterTypes, new Object[]{param});
+        System.out.println("sample one result: " + user);
+        // sample two
+        user = userService.$invoke("get", parameterTypes, new Object[]{new Params("a=b")});
+        System.out.println("sample two result: " + user);
+        System.in.read();
+    }
+}
+```
+
+**GenericConsumer2.java**
+
+```java
+public class GenericConsumer2 {
+    public static void main(String[] args) {
+        ApplicationConfig application = new ApplicationConfig();
+        application.setName("api-generic-consumer");
+        application.setQosEnable(false);
+
+        RegistryConfig registry = new RegistryConfig();
+        registry.setAddress("zookeeper://127.0.0.1:2181");
+
+        application.setRegistry(registry);
+
+        ReferenceConfig<GenericService> reference = new ReferenceConfig<GenericService>();
+        // 弱类型接口名
+        reference.setInterface("org.apache.dubbo.samples.generic.api.IUserService");
+        // 声明为泛化接口
+        reference.setGeneric(true);
+
+        reference.setApplication(application);
+
+        // 用org.apache.dubbo.rpc.service.GenericService可以替代所有接口引用
+        GenericService genericService = reference.get();
+
+        String name = (String) genericService.$invoke("delete", new String[]{int.class.getName()}, new Object[]{1});
+        System.out.println(name);
+    }
+}
+```
+
+这个是没有使用`xml`的方式。
+
+- `reference.setGeneric(true);`
+
+**APIGenericProvider.java**
+
+```java
+public class APIGenericProvider {
+    public static void main(String[] args) throws IOException {
+        new EmbeddedZooKeeper(2181, false).start();
+
+        ApplicationConfig application = new ApplicationConfig();
+        application.setName("api-generic-provider");
+
+        RegistryConfig registry = new RegistryConfig();
+        registry.setAddress("zookeeper://127.0.0.1:2181");
+
+        application.setRegistry(registry);
+
+        GenericService genericService = new GenericServiceImpl();
+
+        ServiceConfig<GenericService> service = new ServiceConfig<GenericService>();
+
+        // 弱类型接口名
+        service.setApplication(application);
+        service.setInterface("org.apache.dubbo.samples.generic.api.HelloService");
+        service.setRef(genericService);
+        service.export();
+
+        ServiceConfig<GenericService> service2 = new ServiceConfig<GenericService>();
+        // 弱类型接口名
+        service2.setApplication(application);
+        service2.setInterface("org.apache.dubbo.samples.generic.api.HiService");
+        service2.setRef(genericService);
+        service2.export();
+        System.in.read();
+    }
+}
+```
+
+如上， `provider`端，通过`ServiceConfig`配置`service`，发布两个service，`02 dubbo-samples-api`样例中也是这样做的，可以参考。
+
+- HelloService
+- HiService
+
+并声明为`GenericeService`
+
+- `service.setRef(genericService);`
+- `service2.setRef(genericService);`
+
+
+
+**APIGenericConsumer.java**
+
+```java
+public class APIGenericConsumer {
+    public static void main(String[] args) {
+        ApplicationConfig application = new ApplicationConfig();
+        application.setName("api-generic-consumer");
+        application.setQosEnable(false);
+
+        RegistryConfig registry = new RegistryConfig();
+        registry.setAddress("zookeeper://127.0.0.1:2181");
+
+        application.setRegistry(registry);
+
+        ReferenceConfig<GenericService> reference = new ReferenceConfig<GenericService>();
+
+        // 弱类型接口名
+        reference.setInterface(HiService.class);
+        reference.setApplication(application);
+
+        HiService hiService = (HiService) reference.get();
+        System.out.println(hiService.hi("dubbo"));
+
+        ReferenceConfig<GenericService> reference2 = new ReferenceConfig<GenericService>();
+
+        // 弱类型接口名
+        reference2.setInterface(HelloService.class);
+        reference2.setApplication(application);
+
+        HelloService helloService = (HelloService) reference2.get();
+        System.out.println(helloService.hello("community"));
+    }
+}
+```
+
+上面的两个调用都使用的是`ReferenceConfig`，其实使用`ReferenceConfig`也是可以的。如下：
+
+```java
+ReferenceConfig<HelloService> reference3 = new ReferenceConfig();
+reference3.setInterface(HelloService.class);
+reference3.setApplication(application);
+
+HelloService helloService1 = reference3.get();
+System.out.println(helloService1.hello("wxg"));
+```
+
+
+
+
+
+
+
+## 13 dubbo-samples-group
+
+代码很简单，因为样例中的业务很简单，现在还看不出，这个样例的作用！
+
+```sh
+group
+|- api
+	|- GroupService
+|- impl
+	|- GroupAServiceImpl
+	|- GroupBServiceImpl
+|- EmbeddedZooKeeper
+|- GroupConsumer
+|- GroupProvider
+
+src/main/resources
+|- spring
+	|- group-consumer.xml
+	|- group-provider.xml
+```
+
+`GroupAServiceImpl`， `GroupBServiceImpl` 都是接口`GroupService`的实现。
+
+**group-provider.xml**
+
+```xm l
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- provider's application name, used for tracing dependency relationship -->
+    <dubbo:application name="demo-provider"/>
+
+    <!-- use multicast registry center to export service -->
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <!-- use dubbo protocol to export service on port 20880 -->
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <!-- service implementation, as same as regular local bean -->
+    <bean id="groupAService" class="org.apache.dubbo.samples.group.impl.GroupAServiceImpl"/>
+
+    <bean id="groupBService" class="org.apache.dubbo.samples.group.impl.GroupBServiceImpl"/>
+
+    <!-- declare the service interface to be exported -->
+    <dubbo:service group="groupA" interface="org.apache.dubbo.samples.group.api.GroupService" ref="groupAService"/>
+
+    <dubbo:service group="groupB" interface="org.apache.dubbo.samples.group.api.GroupService" ref="groupBService"/>
+
+</beans>
+```
+
+**group-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- consumer's application name, used for tracing dependency relationship (not a matching criterion),
+    don't set it same as provider -->
+    <dubbo:application name="demo-consumer">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <!-- use multicast registry center to discover service -->
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <!-- generate proxy for the remote service, then demoService can be used in the same way as the
+    local regular interface -->
+    <dubbo:reference group="groupA" id="groupAService" check="false" interface="org.apache.dubbo.samples.group.api.GroupService"/>
+
+    <dubbo:reference group="groupB" id="groupBService" check="false" interface="org.apache.dubbo.samples.group.api.GroupService"/>
+
+</beans>
+```
+
+**GroupConsumer.xml**
+
+```java
+public class GroupConsumer {
+
+    public static void main(String[] args) {
+        //Prevent to get IPV6 address,this way only work in debug mode
+        //But you can pass use -Djava.net.preferIPv4Stack=true,then it work well whether in debug mode or not
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/group-consumer.xml"});
+        context.start();
+        GroupService groupAService = (GroupService) context.getBean("groupAService"); // get remote service proxy
+        GroupService groupBService = (GroupService)context.getBean("groupBService");
+
+        while (true) {
+            try {
+                Thread.sleep(1000);
+                String resultGroupA = groupAService.sayHello("world"); // call remote method
+                System.out.println(resultGroupA); // get result
+
+                String resultGroupB = groupBService.sayHello("world");
+                System.out.println(resultGroupB); // get result
+
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+
+
+        }
+
+    }
+}
+```
+
+目前，仅从样例，还看不出`group`的用途……
+
+- 我需要进一步调研~！
+
+
+
+
+
+
+
+
+
+
+
+## 14 dubbo-samples-http
+
+
+
+
+
+
+
+## 15 dubbo-samples-jetty
+
+
+
+## 16 dubbo-samples-local
+
+
+
+## 17 dubbo-samples-merge
+
+
+
+## 18 dubbo-samples-mock
+
+
+
+## 19 dubbo-samples-monitor
+
+
+
+## 20 dubbo-samples-multi-registry
+
+
+
+## 21 dubbo-samples-notify
+
+
+
+## 22 dubbo-samples-rest
+
+
+
+## 23 dubbo-samples-scala
+
+
+
+## 24 dubbo-samples-spring-boot-hystrix
+
+
+
+## 25 dubbo-samples-stub
+
+
+
+## 26 dubbo-samples-switch-serialization-thread
+
+
+
+## 27 dubbo-samples-validation
+
+
+
+## 28 dubbo-samples-version
+
+
+
+## 29 dubbo-samples-zipkin
+
+
+
+## 30 dubbo-samples-zookeeper
+
+
 
 
 
@@ -468,6 +1430,65 @@ dubbo.application.qosEnable=false
 在这篇 https://blog.csdn.net/u013202238/article/details/81432784 文章中也提到了`qos-server`端口冲突的问题。作者寻找问题的方式值得借鉴，修改log4j以达到，定位问题，的目的，属实高明！
 
 
+
+http://dubbo.apache.org/zh-cn/docs/user/references/qos.html
+
+
+
+以上链接是官方关于“QOS”的文档，上面详细的描述了“QOS”的作用及配置方式，不用到处去找博客，找答案了。上面的链接非常详细。
+
+文档上描述了配置“QOS”的四种方式：
+
+- 系统属性
+- dubbo.properties
+- XML
+- spring-boot
+
+**系统属性**
+
+​```sh
+-Ddubbo.application.qos.enable=true
+-Ddubbo.application.qos.port=33333
+-Ddubbo.application.qos.accept.foreign.ip=false
+```
+
+**dubbo.properties**
+
+​```java
+dubbo.application.qos.enable=true
+dubbo.application.qos.port=33333
+dubbo.application.qos.accept.foreign.ip=false
+```
+
+**XML**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+  <dubbo:application name="demo-provider">
+    <dubbo:parameter key="qos.enable" value="true"/>
+    <dubbo:parameter key="qos.accept.foreign.ip" value="false"/>
+    <dubbo:parameter key="qos.port" value="33333"/>
+  </dubbo:application>
+  <dubbo:registry address="multicast://224.5.6.7:1234"/>
+  <dubbo:protocol name="dubbo" port="20880"/>
+  <dubbo:service interface="org.apache.dubbo.demo.provider.DemoService" ref="demoService"/>
+  <bean id="demoService" class="org.apache.dubbo.demo.provider.DemoServiceImpl"/>
+</beans>
+```
+
+**spring-boot**
+
+```sh
+dubbo.application.qosEnable=true
+dubbo.application.qosPort=33333
+dubbo.application.qosAcceptForeignIp=false
+```
 
 
 
