@@ -1320,29 +1320,611 @@ public class GroupConsumer {
 
 
 
-
-
-
-
-
-
 ## 14 dubbo-samples-http
 
+之前的例子都是使用的`dubbo`协议，这个样例使用的是`http`协议，因此，`pom.xml`和之前的例子不同。
 
+**pom.xml**
 
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>dubbo-samples-all</artifactId>
+        <groupId>org.apache.dubbo</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
 
+    <artifactId>dubbo-samples-http</artifactId>
+
+    <properties>
+        <tomcat.version>7.0.88</tomcat.version>
+        <servlet.version>3.0.1</servlet.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${servlet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-logging-juli</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>
+```
+
+然后，其他的类没什么特殊的 ，还是用的`sayHello(String) : String`这个例子，`http-provider.xml`有所不同，需要注意一下：
+
+**http-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="generic-generic"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="http" port="8080" server="tomcat"/>
+
+    <bean id="demoService" class="org.apache.dubbo.samples.http.impl.DemoServiceImpl"/>
+
+    <dubbo:service interface="org.apache.dubbo.samples.http.api.DemoService" ref="demoService" protocol="http"/>
+
+</beans>
+```
+
+如上，`dubbo:protocol`和`dubbo:service`注意一下！
 
 
 
 ## 15 dubbo-samples-jetty
 
+一开始，我以为和`14 dubbo-samples-http`一样，只需将`server="tomcat"`改为`server="jetty"`就可以了的，但是，看了代码发现完全不一样！
+
+首先，还是`pom.xml`
+
+**pom.xml**
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.apache.dubbo</groupId>
+    <artifactId>dubbo-samples-jetty</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>dubbo-samples-jetty</name>
+    <!-- FIXME change it to the project's website -->
+    <url>http://www.example.com</url>
+
+    <parent>
+        <artifactId>dubbo-samples-all</artifactId>
+        <groupId>org.apache.dubbo</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.4.11.v20180605</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlet</artifactId>
+            <version>9.4.11.v20180605</version>
+        </dependency>
+    </dependencies>
+...
+</project>
+```
+
+```
+org.apache.dubbo.samples.jetty
+|- api
+	|- JettyService
+|- impl
+	|- JettyServiceImpl
+|- HelloWorld
+|- JettyContainer
+```
+
+**JettyService**
+
+```java
+public interface JettyService {
+    void sayHello();
+}
+```
+
+
+
+**JettyServiceImpl**
+
+```java
+public class JettyServiceImpl implements JettyService {
+
+    private static JettyContainer container = new JettyContainer();
+
+    @Override
+    public void sayHello() {
+        container.setServerHandler(new HelloWorld());
+
+        container.start();
+
+        container.stop();
+    }
+
+}
+```
+
+
+
+**HelloWorld**
+
+```java
+public class HelloWorld extends AbstractHandler
+{
+    public void handle(String target,
+                       Request baseRequest,
+                       HttpServletRequest request,
+                       HttpServletResponse response)
+            throws IOException, ServletException
+    {
+        response.setContentType("text/html;charset=utf-8");
+        response.setStatus(HttpServletResponse.SC_OK);
+        baseRequest.setHandled(true);
+        response.getWriter().println("<h1>Hello World</h1>");
+    }
+}
+```
+
+
+
+**JettyContainer**
+
+```java
+public class JettyContainer implements Container {
+
+    private static final Logger logger = LoggerFactory.getLogger(JettyContainer.class);
+
+    private static Server server = new Server(8080);
+
+    public void setServerHandler(Handler handler){
+        server.setHandler(handler);
+    }
+
+    @Override
+    public void start() {
+        try {
+            server.start();
+            server.join();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to start jetty" + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void stop() {
+        if (server != null) {
+            try {
+                server.stop();
+            } catch (Exception e) {
+                logger.warn(e.getMessage(), e);
+            }
+        }
+    }
+}
+```
+
+
+
+这个样例，没有看懂！
+
+
+
 
 
 ## 16 dubbo-samples-local
 
+这个`local`是表示`in-jvm`吗？
+
+```
+src/main/
+|- java/org.apache.dubbo.samples.local
+	|- api
+		|- DemoService
+	|- impl
+		|- DemoServiceImpl
+	|- EmbeddedZooKeeper
+	|- LocalDemo
+|- resources/spring
+	|- dubbo-demo.xml
+```
+
+**DemoService.java**
+
+```java
+public interface DemoService {
+
+    String sayHello(String name);
+
+}
+```
+
+
+
+**DemoServiceImpl**
+
+```java
+public class DemoServiceImpl implements DemoService {
+
+    public String sayHello(String name) {
+        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext
+            .getContext().getRemoteAddress());
+        return "Hello " + name + ", response from provider: " + RpcContext.getContext().getLocalAddress();
+    }
+
+}
+```
+
+
+
+**LocalDemo**
+
+```java
+public class LocalDemo {
+
+    public static void main(String[] args) throws Exception {
+        new EmbeddedZooKeeper(2181, false).start();
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/dubbo-demo.xml"});
+        context.start();
+
+        DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
+
+        while (true) {
+            try {
+                Thread.sleep(1000);
+                String hello = demoService.sayHello("world"); // call remote method
+                System.out.println(hello); // get result
+
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+`LocalDemo.java`就是启动类，这里看不出谁是`provider`谁是`consumer`，
+
+我还是觉得，没搞懂： 不然我不会看到这样的代码，就迷惑了……
+
+**dubbo-demo.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="demo-provider"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20890"/>
+
+    <bean id="demoServiceTarget" class="org.apache.dubbo.samples.local.impl.DemoServiceImpl"/>
+
+    <dubbo:service interface="org.apache.dubbo.samples.local.api.DemoService" ref="demoServiceTarget"/>
+
+    <dubbo:reference id="demoService" interface="org.apache.dubbo.samples.local.api.DemoService"/>
+
+</beans>
+```
+
+只有一个配置，如上！
+
 
 
 ## 17 dubbo-samples-merge
+
+### 分组聚合
+
+按组合并返回结果，比如菜单服务，接口一样，但有多种实现，用group区分，现在消费方需从每种group中调用一次返回结果，合并结果返回，这样就可以实现聚合菜单项。
+
+> 以上，是`README`中复制过来的。
+
+这个样例和`13 dubbo-samples-group`有很深的关联。
+
+```
+src/main
+|- java
+	|- org.apache.dubbo.samples.merge
+		|- api
+			|- MergeService
+		|- impl
+			|- MergeServiceImpl
+			|- MergeServiceImpl2
+			|- MergeServiceImpl3
+		|- EmbeddedZooKeeper
+		|- MergeConsumer
+		|- MergeConsumer2
+		|- MergeProvider
+		|- MergeProvider2
+|- resources
+	|- spring
+		|- merge-consumer.xml
+		|- merge-consumer2.xml
+		|- merge-provider.xml
+		|- merge-provider2.xml
+```
+
+**MergeService.java**
+
+```java
+public interface MergeService {
+
+    List<String> mergeResult();
+
+}
+```
+
+**MergeServiceImpl.java**
+
+```java
+public class MergeServiceImpl implements MergeService {
+
+    public List<String> mergeResult() {
+        List<String> menus = new ArrayList<String>();
+        menus.add("group-1.1");
+        menus.add("group-1.2");
+        return menus;
+    }
+
+}
+```
+
+**MergeServiceImpl2.java**
+
+```java
+public class MergeServiceImpl2 implements MergeService {
+
+    public List<String> mergeResult() {
+        List<String> menus = new ArrayList<String>();
+        menus.add("group-2.1");
+        menus.add("group-2.2");
+        return menus;
+    }
+
+}
+```
+
+**MergeServiceImpl3.java**
+
+```java
+public class MergeServiceImpl3 implements MergeService {
+
+    public List<String> mergeResult() {
+        List<String> menus = new ArrayList<String>();
+        menus.add("group-3.1");
+        menus.add("group-3.2");
+        return menus;
+    }
+
+}
+```
+
+**MergeConsumer.java**
+
+```java
+public class MergeConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/merge-consumer.xml"});
+        context.start();
+        MergeService mergeService = (MergeService) context.getBean("mergeService");
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            try {
+                List<String> result = mergeService.mergeResult();
+                System.out.println("(" + i + ") " + result);
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+}
+```
+
+**MergeConsumer2.java**
+
+```java
+public class MergeConsumer2 {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/merge-consumer2.xml"});
+        context.start();
+        MergeService mergeService = (MergeService) context.getBean("mergeService");
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            try {
+                List<String> result = mergeService.mergeResult();
+                System.out.println("(" + i + ") " + result);
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+}
+```
+
+**MergeProvider.java**
+
+```java
+public class MergeProvider {
+
+    public static void main(String[] args) throws Exception {
+        new EmbeddedZooKeeper(2181, false).start();
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/merge-provider.xml"});
+        context.start();
+        System.in.read();
+    }
+
+}
+```
+
+**MergeProvider2.java**
+
+```java
+public class MergeProvider2 {
+
+    public static void main(String[] args) throws Exception {
+        new EmbeddedZooKeeper(2181, false).start();
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/merge-provider2.xml"});
+        context.start();
+        System.in.read();
+    }
+
+}
+```
+
+**merge-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="merge-consumer">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:reference id="mergeService" interface="org.apache.dubbo.samples.merge.api.MergeService" group="*"/>
+
+</beans>
+```
+
+`merge-consumer.xml`对应于`MergeConsumer.java`，这里`group="*"`，那说明所有的`group`都满足，
+
+- 当启动`MergeProvider`，输出的是： `[group-1.1, group-1.2]`
+- 当启动`MergeProvider2`，输出的是： `[group-3.1, group-3.2]`
+- `[group-2.1, group-2.2]`看不到输出。因为，`[group-1.1, group-1.2]`会优先输出！
+
+**merge-consumer2.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="merge-consumer2">
+        <dubbo:parameter key="qos.enable" value="false"/>
+    </dubbo:application>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:reference id="mergeService" interface="org.apache.dubbo.samples.merge.api.MergeService"
+                     group="merge2,merge3"/>
+
+</beans>
+```
+
+`group="merge2,merge3"`
+
+- 在这里，和上面不一样，`[group-1.1, group-1.2]`没有输出机会，因为它对应的是`group=merge`，而上面只有`merge2,merge3`。
+
+**merge-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="merge-provider"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <bean id="mergeService" class="org.apache.dubbo.samples.merge.impl.MergeServiceImpl"/>
+
+    <dubbo:service group="merge" interface="org.apache.dubbo.samples.merge.api.MergeService" ref="mergeService"/>
+
+    <bean id="mergeService2" class="org.apache.dubbo.samples.merge.impl.MergeServiceImpl2"/>
+
+    <dubbo:service group="merge2" interface="org.apache.dubbo.samples.merge.api.MergeService" ref="mergeService2"/>
+
+</beans>
+```
+
+**merge-provider2.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="merge-provider2"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20881"/>
+
+    <bean id="mergeService3" class="org.apache.dubbo.samples.merge.impl.MergeServiceImpl3"/>
+
+    <dubbo:service group="merge3" interface="org.apache.dubbo.samples.merge.api.MergeService" ref="mergeService3"/>
+
+</beans>
+```
 
 
 
@@ -1350,7 +1932,17 @@ public class GroupConsumer {
 
 
 
+
+
+
+
+
+
 ## 19 dubbo-samples-monitor
+
+
+
+
 
 
 
@@ -1358,7 +1950,15 @@ public class GroupConsumer {
 
 
 
+
+
+
+
 ## 21 dubbo-samples-notify
+
+
+
+
 
 
 
@@ -1366,7 +1966,15 @@ public class GroupConsumer {
 
 
 
+
+
+
+
 ## 23 dubbo-samples-scala
+
+
+
+
 
 
 
@@ -1374,7 +1982,15 @@ public class GroupConsumer {
 
 
 
+
+
+
+
 ## 25 dubbo-samples-stub
+
+
+
+
 
 
 
@@ -1382,7 +1998,15 @@ public class GroupConsumer {
 
 
 
+
+
+
+
 ## 27 dubbo-samples-validation
+
+
+
+
 
 
 
@@ -1390,7 +2014,15 @@ public class GroupConsumer {
 
 
 
+
+
+
+
 ## 29 dubbo-samples-zipkin
+
+
+
+
 
 
 
@@ -1446,7 +2078,7 @@ http://dubbo.apache.org/zh-cn/docs/user/references/qos.html
 
 **系统属性**
 
-​```sh
+```sh
 -Ddubbo.application.qos.enable=true
 -Ddubbo.application.qos.port=33333
 -Ddubbo.application.qos.accept.foreign.ip=false
@@ -1454,7 +2086,7 @@ http://dubbo.apache.org/zh-cn/docs/user/references/qos.html
 
 **dubbo.properties**
 
-​```java
+```java
 dubbo.application.qos.enable=true
 dubbo.application.qos.port=33333
 dubbo.application.qos.accept.foreign.ip=false
