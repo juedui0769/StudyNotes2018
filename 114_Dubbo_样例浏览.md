@@ -1930,9 +1930,28 @@ public class MergeProvider2 {
 
 ## 18 dubbo-samples-mock
 
+```
+src/main/java
+|- org.apache.dubbo.samples.mock
+	|- api
+		|- DemoService
+		|- DemoServiceMock
+	|- impl
+		|- DemoServiceImpl
+	|- EmbeddedZooKeeper
+	|- MockConsumer
+	|- MockProvider
+src/main/resources
+	|- spring
+		|- mock-consumer.xml
+		|- mock-provider.xml
+```
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-mock
 
+官网github地址如上，这个例子，我在本地运行时出错。但，看输出，结果是正确调用的。
 
+所以，有点没明白这个例子的用意！
 
 
 
@@ -1940,7 +1959,15 @@ public class MergeProvider2 {
 
 ## 19 dubbo-samples-monitor
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-monitor
 
+`dubbo-demo-consumer.xml`和`dubbo-demo-provider.xml`，这两个文件中多了如下的配置:
+
+```xml
+<dubbo:monitor protocol="registry" />
+```
+
+对这个例子也是一头雾水！
 
 
 
@@ -1948,7 +1975,89 @@ public class MergeProvider2 {
 
 ## 20 dubbo-samples-multi-registry
 
+### [多注册中心](http://dubbo.apache.org/#!/docs/user/demos/multi-registry.md?lang=zh-cn)
 
+Dubbo 支持同一服务向多注册中心同时注册，或者不同服务分别注册到不同的注册中心上去，甚至可以同时引用注册在不同注册中心上的同名服务。另外，注册中心是支持自定义扩展的。
+
+> 复制自，README
+
+**MultiRegistryProvider.java**
+
+```java
+public class MultiRegistryProvider {
+
+    public static void main(String[] args) throws Exception{
+        new EmbeddedZooKeeper(2181, false).start();
+        new EmbeddedZooKeeper(2182, false).start();
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/multi-registry-provider.xml"});
+        context.start();
+        System.in.read(); // press any key to exit
+    }
+}
+```
+
+以上代码，创建两个内嵌zookeeper，分别关联端口`2181`和`2182`。
+
+**multi-registry-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- provider's application name, used for tracing dependency relationship -->
+    <dubbo:application name="multi-registry-provider"/>
+
+    <!-- use multicast registry center to export service -->
+    <dubbo:registry id="beijingRegistry" address="zookeeper://127.0.0.1:2181" default="false"/>
+    <dubbo:registry id="shanghaiRegistry" address="zookeeper://127.0.0.1:2182" />
+
+    <!-- use dubbo protocol to export service on port 20880 -->
+    <dubbo:protocol name="dubbo" port="20890"/>
+
+    <!-- service implementation, as same as regular local bean -->
+    <bean id="helloService" class="org.apache.dubbo.samples.multi.registry.impl.HelloServiceImpl"/>
+    <bean id="demoService" class="org.apache.dubbo.samples.multi.registry.impl.DemoServiceImpl"/>
+
+    <!-- declare the service interface to be exported -->
+    <dubbo:service interface="org.apache.dubbo.samples.multi.registry.api.HelloService" ref="helloService" registry="shanghaiRegistry,beijingRegistry" />
+    <dubbo:service interface="org.apache.dubbo.samples.multi.registry.api.DemoService" ref="demoService" />
+
+</beans>
+```
+
+通过ID，来引用不同的注册中心。内嵌zookeeper是在provider端启动的。
+
+**multi-registry-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <!-- consumer's application name, used for tracing dependency relationship (not a matching criterion),
+    don't set it same as provider -->
+    <dubbo:application name="multi-registry-consumer"/>
+
+    <!-- use multicast registry center to discover service -->
+    <dubbo:registry id="beijingRegistry" address="zookeeper://127.0.0.1:2181" default="false"/>
+    <dubbo:registry id="shanghaiRegistry" address="zookeeper://127.0.0.1:2182" />
+
+    <!-- generate proxy for the remote service, then demoService can be used in the same way as the
+    local regular interface -->
+    <dubbo:reference id="demoServiceFormDefault" interface="org.apache.dubbo.samples.multi.registry.api.DemoService"/>
+    <dubbo:reference id="demoServiceFormBeijing" interface="org.apache.dubbo.samples.multi.registry.api.DemoService" registry="beijingRegistry"/>
+    <dubbo:reference id="helloServiceFormBeijing" interface="org.apache.dubbo.samples.multi.registry.api.HelloService" registry="beijingRegistry"/>
+    <dubbo:reference id="helloServiceFormShanghai" interface="org.apache.dubbo.samples.multi.registry.api.HelloService" registry="shanghaiRegistry"/>
+
+</beans>
+```
+
+消费端，不启动zookeeper，通过地址来查找注册中心。
 
 
 
@@ -1956,15 +2065,37 @@ public class MergeProvider2 {
 
 ## 21 dubbo-samples-notify
 
+这个例子和`03 dubbo-samples-async`及`07 dubbo-samples-callback`有类似之处，可以一起参阅。
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-notify
 
+```
+src/main/java
+|- org.apache.dubbo.samples.notify
+	|- api
+		|- DemoService
+		|- Notify
+	|- impl
+		|- DemoServiceImpl
+		|- NotifyImpl
+	|- EmbeddedZooKeeper
+	|- NotifyConsumer
+	|- NotifyProvider
+src/main/resources
+	|- spring
+		|- notify-consumer.xml
+		|- notify-provider.xml
+```
 
+没什么特别之处，就不贴代码了。
 
 
 
 ## 22 dubbo-samples-rest
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-rest
 
+需要编译成war包，放到tomcat中运行，但这个没看懂，
 
 
 
@@ -1972,13 +2103,118 @@ public class MergeProvider2 {
 
 ## 23 dubbo-samples-scala
 
+This sample will show you how to boost your Dubbo application with the powerful Scala, as well as how to use property-based test to save you from bugs.
 
+> 复制自README
 
+```
+src/main/scala
+|- org.apache.dubbo.samples.scala
+	|- consumer
+		|- ConsumerApp.scala
+		|- ConsumerConfigruation.scala
+		|- StringServiceConsumer.scala
+	|- provider
+		|- impl
+			|- StringServiceImpl.sacla
+		|- ProviderApp.scala
+		|- ProviderConfiguration.scala
+	|- service
+		|- StringService.scala
+	|- EmbeddedZooKeeper
+src/main/resources
+	|- dubbo-consumer.properties
+	|- dubbo-provider.properties
+	|- log4j.properties
+```
 
+没学习`scala`，所以，略过此样例……
 
 
 
 ## 24 dubbo-samples-spring-boot-hystrix
+
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-spring-boot-hystrix
+
+
+
+**pom.xml**
+
+```xml
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+            <version>1.4.4.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+```
+
+注意，pom.xml的改变。
+
+```java
+src/main/java
+|- consumer
+	|- ConsumerApplication
+|- provider
+	|- ProviderApplication
+```
+
+以上，两个类分别是provider端和consumer端的启动类，
+
+这个样例，没有仔细研究！
+
+```
+src/main/resources
+|- application.properties
+```
+
+**application.properties**
+
+```
+# Dubbo Config properties
+## ApplicationConfig Bean
+dubbo.application.name= dubbo-demo
+
+## RegistryConfig Bean
+dubbo.registry.id = my-registry
+dubbo.registry.address = zookeeper://localhost:2181?client=curator
+
+spring.aop.proxyTargetClass = true
+
+
+dubbo.application.qosEnable=false
+
+```
+
+
+
+
+
+## 24 + 1 dubbo-samples-spring-hystrix
+
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-spring-hystrix
+
+这个样例和`24 dubbo-samples-spring-boot-hystrix`有什么关联么？没仔细研究。
+
+
 
 
 
@@ -1988,29 +2224,323 @@ public class MergeProvider2 {
 
 ## 25 dubbo-samples-stub
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-stub
 
+```
+src/main/java
+|- org.apache.dubbo.samples.stub
+	|- api
+		|- DemoService
+	|- impl
+		|- DemoServiceImpl
+		|- DemoServiceStub
+	|- EmbeddedZooKeeper
+	|- StubConsumer
+	|- StubProvider
+src/main/resources
+	|- spring
+		|- stub-consumer.xml
+		|- stub-provider.xml
+```
 
+**stub-provider.xml**
 
+```xml
+<!-- provider's application name, used for tracing dependency relationship -->
+<dubbo:application name="demo-provider"/>
+
+<!-- use multicast registry center to export service -->
+<dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+<!-- use dubbo protocol to export service on port 20880 -->
+<dubbo:protocol name="dubbo" port="20880"/>
+
+<!-- service implementation, as same as regular local bean -->
+<bean id="demoService" class="org.apache.dubbo.samples.stub.impl.DemoServiceImpl"/>
+
+<!-- declare the service interface to be exported -->
+<dubbo:service interface="org.apache.dubbo.samples.stub.api.DemoService" ref="demoService" stub="org.apache.dubbo.samples.stub.impl.DemoServiceStub"/>
+```
+
+重点在`dubbo:service`，如上。
+
+```java
+public interface DemoService {
+
+    public String sayHello(String name);
+}
+
+public class DemoServiceImpl implements DemoService {
+
+    public String sayHello(String name) {
+        return "<< return " + name;
+    }
+}
+
+public class DemoServiceStub implements DemoService{
+
+    private final DemoService demoService;
+
+    public DemoServiceStub(DemoService demoService) {
+        this.demoService = demoService;
+    }
+
+    public String sayHello(String name) {
+        //client check code goes here
+        System.out.println("stub sayHello");
+
+        try {
+            return demoService.sayHello(name);
+        } catch (Exception e) {
+           //handle Exception
+            return null;
+        }
+    }
+}
+```
+
+结合`stub-provider.xml`，`ref`将被传入`stub`，作为参数，stub调用的还是`DemoServiceImpl`，stub只是作为代理而已？
 
 
 
 ## 26 dubbo-samples-switch-serialization-thread
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-switch-serialization-thread
 
+2018年12月19日17:41:07，样例中`provider.xml`和`consumer.xml`需要修改。
 
+- 将`com.alibaba.dubbo...`改为`org.apache.dubbo....`
 
+`switch-serialization-thread`到底是什么意思，没有深究！
 
 
 
 ## 27 dubbo-samples-validation
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-validation
 
+就`ValidationConsumer.java`代码多点，其他的类和配置都和之前的例子差不多。
+
+**ValidationConsumer.java**
+
+```java
+public class ValidationConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/validation-consumer.xml"});
+        context.start();
+
+        ValidationService validationService = (ValidationService) context.getBean("validationService");
+
+        // Save OK
+        ValidationParameter parameter = new ValidationParameter();
+        parameter.setName("liangfei");
+        parameter.setEmail("liangfei@liang.fei");
+        parameter.setAge(50);
+        parameter.setLoginDate(new Date(System.currentTimeMillis() - 1000000));
+        parameter.setExpiryDate(new Date(System.currentTimeMillis() + 1000000));
+        validationService.save(parameter);
+        System.out.println("Validation Save OK");
+
+        // Save Error
+        try {
+            parameter = new ValidationParameter();
+            validationService.save(parameter);
+            System.err.println("Validation Save ERROR");
+        } catch (Exception e) {
+            ConstraintViolationException ve = (ConstraintViolationException) e;
+            Set<ConstraintViolation<?>> violations = ve.getConstraintViolations();
+            System.out.println(violations);
+        }
+
+        // Delete OK
+        validationService.delete(2, "abc");
+        System.out.println("Validation Delete OK");
+
+        // Delete Error
+        try {
+            validationService.delete(0, "abc");
+            System.err.println("Validation Delete ERROR");
+        } catch (Exception e) {
+            ConstraintViolationException ve = (ConstraintViolationException) e;
+            Set<ConstraintViolation<?>> violations = ve.getConstraintViolations();
+            System.out.println(violations);
+        }
+    }
+
+}
+```
 
 
 
 
 
 ## 28 dubbo-samples-version
+
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-version
+
+### 多版本
+
+- 当一个接口实现，出现不兼容升级时，可以用版本号过渡，版本号不同的服务相互间不引用。
+- 可以按照以下的步骤进行版本迁移：
+  - 在低压力时间段，先升级一半提供者为新版本
+  - 再将所有消费者升级为新版本
+  - 然后将剩下的一半提供者升级为新版本
+
+> 复制自 README
+
+```
+src/main/java
+|- org.apache.dubbo.samples.version
+	|- api
+	|- impl
+	|- EmbeddedZooKeeper
+	|- VersionConsumer
+	|- VersionProvider
+	|- VersionProvider2
+src/main/resources
+	|- spring
+		|- version-consumer.xml
+		|- version-provider.xml
+		|- version-provider2.xml
+```
+
+```java
+public interface VersionService {
+
+    String sayHello(String name);
+
+}
+
+public class VersionServiceImpl implements VersionService {
+
+    public String sayHello(String name) {
+        return "hello, " + name;
+    }
+
+}
+
+public class VersionServiceImpl2 implements VersionService {
+
+    public String sayHello(String name) {
+        return "hello2, " + name;
+    }
+
+}
+```
+
+以上是接口，及其，两个实现。
+
+```java
+public class VersionConsumer {
+
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/version-consumer.xml"});
+        context.start();
+        VersionService versionService = (VersionService) context.getBean("versionService");
+        for (int i = 0; i < 10000; i++) {
+            String hello = versionService.sayHello("world");
+            System.out.println(hello);
+            Thread.sleep(2000);
+        }
+        System.in.read();
+    }
+
+}
+
+
+public class VersionProvider {
+
+    public static void main(String[] args) throws Exception {
+        new EmbeddedZooKeeper(2181, false).start();
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/version-provider.xml"});
+        context.start();
+        System.in.read();
+    }
+
+}
+
+
+public class VersionProvider2 {
+
+    public static void main(String[] args) throws Exception {
+        new EmbeddedZooKeeper(2181, false).start();
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"spring/version-provider2.xml"});
+        context.start();
+        System.in.read();
+    }
+
+}
+```
+
+以上是provider端和consumer端，两个provider端的代码几乎差不错就是调用的xml不一样。
+
+**version-consumer.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="version-consumer"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:reference id="versionService" interface="org.apache.dubbo.samples.version.api.VersionService" version="*"/>
+
+</beans>
+```
+
+**version-provider.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="version-provider"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+    <bean id="versionService" class="org.apache.dubbo.samples.version.impl.VersionServiceImpl"/>
+
+
+    <dubbo:service interface="org.apache.dubbo.samples.version.api.VersionService" version="1.0.0"
+                   ref="versionService"/>
+
+</beans>
+```
+
+**version-provider2.xml**
+
+```xml
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="version-provider2"/>
+
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+
+    <dubbo:protocol name="dubbo" port="20882"/>
+
+    <bean id="versionService" class="org.apache.dubbo.samples.version.impl.VersionServiceImpl2"/>
+
+    <dubbo:service interface="org.apache.dubbo.samples.version.api.VersionService" version="2.0.0"
+                   ref="versionService"/>
+
+</beans>
+```
+
+`dubbo:service version="..."`重点是这个，
 
 
 
@@ -2020,17 +2550,19 @@ public class MergeProvider2 {
 
 ## 29 dubbo-samples-zipkin
 
+zipkin ： https://www.oschina.net/search?scope=project&q=zipkin
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-zipkin
 
-
+这个，还要下载 `zipkin`。
 
 
 
 ## 30 dubbo-samples-zookeeper
 
+https://github.com/apache/incubator-dubbo-samples/tree/master/dubbo-samples-zookeeper
 
-
-
+之前的样例使用的都是嵌入式zookeeper，这个样例，使用docker版zookeeper。
 
 
 
