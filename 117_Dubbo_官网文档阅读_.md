@@ -1227,93 +1227,907 @@ http://dubbo.apache.org/zh-cn/docs/user/demos/delay-publish.html
 
 ## 28 并发控制
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/concurrency-control.html
+
+### 配置样例
+
+**样例 1**
+
+限制 `com.foo.BarService` 的每个方法，服务器端并发执行（或占用线程池线程数）不能超过 10 个：
+
+```xml
+<dubbo:service interface="com.foo.BarService" executes="10" />
+```
 
 
 
+**样例 2**
+
+限制 `com.foo.BarService` 的 `sayHello` 方法，服务器端并发执行（或占用线程池线程数）不能超过 10 个：
+
+```xml
+<dubbo:service interface="com.foo.BarService">
+    <dubbo:method name="sayHello" executes="10" />
+</dubbo:service>
+```
+
+
+
+**样例 3**
+
+限制 `com.foo.BarService` 的每个方法，每客户端并发执行（或占用连接的请求数）不能超过 10 个：
+
+```xml
+<dubbo:service interface="com.foo.BarService" actives="10" />
+```
+
+或
+
+```xml
+<dubbo:reference interface="com.foo.BarService" actives="10" />
+```
+
+
+
+**样例 4**
+
+限制 `com.foo.BarService` 的 `sayHello` 方法，每客户端并发执行（或占用连接的请求数）不能超过 10 个：
+
+```xml
+<dubbo:service interface="com.foo.BarService">
+    <dubbo:method name="sayHello" actives="10" />
+</dubbo:service>
+```
+
+或
+
+```xml
+<dubbo:reference interface="com.foo.BarService">
+    <dubbo:method name="sayHello" actives="10" />
+</dubbo:service>
+```
+
+如果 `<dubbo:service>` 和 `<dubbo:reference>` 都配了actives，`<dubbo:reference>` 优先，参见：[配置的覆盖策略](http://dubbo.apache.org/zh-cn/docs/user/configuration/xml.md#%E9%85%8D%E7%BD%AE%E8%A6%86%E7%9B%96%E5%85%B3%E7%B3%BB)。
+
+
+
+### Load Balance 均衡
+
+配置服务的客户端的 `loadbalance` 属性为 `leastactive`，此 Loadbalance 会调用并发数最小的 Provider（Consumer端并发数）。
+
+```xml
+<dubbo:reference interface="com.foo.BarService" loadbalance="leastactive" />
+```
+
+或
+
+```xml
+<dubbo:service interface="com.foo.BarService" loadbalance="leastactive" />
+```
 
 
 
 ## 29 连接控制
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/config-connections.html
+
+### 服务端连接控制：
+
+限制服务器端接受的连接不能超过 10 个
+
+> 因为连接在 Server上，所以配置在 Provider 上
+
+```xml
+<dubbo:provider protocol="dubbo" accepts="10" />
+```
+
+或者
+
+```xml
+<dubbo:protocol name="dubbo" accepts="10" />
+```
+
+
+
+### 客户端连接控制：
+
+限制客户端服务使用连接不能超过 10 个
+
+> 如果是长连接，比如 Dubbo 协议，connections 表示该服务对每个提供者建立的长连接数
+
+```xml
+<dubbo:reference interface="com.foo.BarService" connections="10" />
+```
+
+或者
+
+```xml
+<dubbo:service interface="com.foo.BarService" connections="10" />
+```
+
+如果 `<dubbo:service>` 和 `<dubbo:reference>` 都配了 connections，`<dubbo:reference>` 优先，参见：[配置的覆盖策略](http://dubbo.apache.org/zh-cn/docs/user/configuration/xml.html)
+
 
 
 ## 30 延迟连接
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/lazy-connect.html
+
+延迟连接用于减少长连接数。当有调用发起时，再创建长连接。
+
+> 注意：该配置只对使用长连接的 dubbo 协议生效。
+
+```xml
+<dubbo:protocol name="dubbo" lazy="true" />
+```
 
 
 
 ## 31 粘滞连接
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/stickiness.html
+
+粘滞连接用于有状态服务，尽可能让客户端总是向同一提供者发起调用，除非该提供者挂了，再连另一台。
+
+粘滞连接将自动开启[延迟连接](http://dubbo.apache.org/zh-cn/docs/user/demos/lazy-connect.html)，以减少长连接数。
+
+```xml
+<dubbo:reference id="xxxService" interface="com.xxx.XxxService" sticky="true" />
+```
+
+Dubbo 支持方法级别的粘滞连接，如果你想进行更细力度的控制，还可以这样配置。
+
+```xml
+<dubbo:reference id="xxxService" interface="com.xxx.XxxService">
+    <dubbo:mothod name="sayHello" sticky="true" />
+</dubbo:reference>
+```
+
 
 
 ## 32 令牌验证
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/token-authorization.html
+
+通过令牌验证在注册中心控制权限，以决定要不要下发令牌给消费者，可以防止消费者绕过注册中心访问提供者，另外通过注册中心可灵活改变授权方式，而不需修改或升级提供者
+
+![](./imgs/117_dubbo-token.jpg)
+
+可以全局设置开启令牌验证：
+
+```xml
+<!--随机token令牌，使用UUID生成-->
+<dubbo:provider interface="com.foo.BarService" token="true" />
+```
+
+或
+
+```xml
+<!--固定token令牌，相当于密码-->
+<dubbo:provider interface="com.foo.BarService" token="123456" />
+```
+
+**也可在服务级别设置：**
+
+```xml
+<!--随机token令牌，使用UUID生成-->
+<dubbo:service interface="com.foo.BarService" token="true" />
+```
+
+或
+
+```xml
+<!--固定token令牌，相当于密码-->
+<dubbo:service interface="com.foo.BarService" token="123456" />
+```
+
+**还可在协议级别设置：**
+
+```xml
+<!--随机token令牌，使用UUID生成-->
+<dubbo:protocol name="dubbo" token="true" />
+```
+
+或
+
+```xml
+<!--固定token令牌，相当于密码-->
+<dubbo:protocol name="dubbo" token="123456" />
+```
+
 
 
 
 ## 33 路由规则
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/routing-rule.html
+
+路由规则 决定一次 dubbo 服务调用的目标服务器，分为条件路由规则和脚本路由规则，并且支持可扩展 。
+
+> `2.2.0` 以上版本支持
+>
+> 路由规则扩展点：[路由扩展](http://dubbo.apache.org/books/dubbo-dev-book/impls/router.html)
+
+### 写入路由规则
+
+向注册中心写入路由规则的操作通常由监控中心或治理中心的页面完成
+
+```java
+RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
+Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
+registry.register(URL.valueOf("condition://0.0.0.0/com.foo.BarService?category=routers&dynamic=false&rule=" 
++ URL.encode("host = 10.20.153.10 => host = 10.20.153.11")));
+```
+
+其中：
+
+- `condition://` 表示路由规则的类型，支持条件路由规则和脚本路由规则，可扩展，**必填**。
+- `0.0.0.0` 表示对所有 IP 地址生效，如果只想对某个 IP 的生效，请填入具体 IP，**必填**。
+- `com.foo.BarService` 表示只对指定服务生效，**必填**。
+- `group=foo` 对指定服务的指定group生效，不填表示对未配置group的指定服务生效
+- `version=1.0`对指定服务的指定version生效，不填表示对未配置version的指定服务生效
+- `category=routers` 表示该数据为动态配置类型，**必填**。
+- `dynamic=false` 表示该数据为持久数据，当注册方退出时，数据依然保存在注册中心，**必填**。
+- `enabled=true` 覆盖规则是否生效，可不填，缺省生效。
+- `force=false` 当路由结果为空时，是否强制执行，如果不强制执行，路由结果为空的路由规则将自动失效，可不填，缺省为 `false`。
+- `runtime=false` 是否在每次调用时执行路由规则，否则只在提供者地址列表变更时预先执行并缓存结果，调用时直接从缓存中获取路由结果。如果用了参数路由，必须设为 `true`，需要注意设置会影响调用的性能，可不填，缺省为 `false`。
+- `priority=1` 路由规则的优先级，用于排序，优先级越大越靠前执行，可不填，缺省为 `0`。
+- `rule=URL.encode("host = 10.20.153.10 => host = 10.20.153.11")` 表示路由规则的内容，**必填**。
+
+### 条件路由规则
+
+基于条件表达式的路由规则，如：`host = 10.20.153.10 => host = 10.20.153.11`
+
+**规则：**
+
+- `=>` 之前的为消费者匹配条件，所有参数和消费者的 URL 进行对比，当消费者满足匹配条件时，对该消费者执行后面的过滤规则。
+- `=>` 之后为提供者地址列表的过滤条件，所有参数和提供者的 URL 进行对比，消费者最终只拿到过滤后的地址列表。
+- 如果匹配条件为空，表示对所有消费方应用，如：`=> host != 10.20.153.11`
+- 如果过滤条件为空，表示禁止访问，如：`host = 10.20.153.10 =>`
+
+**表达式：**
+
+参数支持：
+
+- 服务调用信息，如：method, argument 等，暂不支持参数路由
+- URL 本身的字段，如：protocol, host, port 等
+- 以及 URL 上的所有参数，如：application, organization 等
+
+条件支持：
+
+- 等号 `=` 表示"匹配"，如：`host = 10.20.153.10`
+- 不等号 `!=` 表示"不匹配"，如：`host != 10.20.153.10`
+
+值支持：
+
+- 以逗号 `,` 分隔多个值，如：`host != 10.20.153.10,10.20.153.11`
+- 以星号 `*` 结尾，表示通配，如：`host != 10.20.*`
+- 以美元符 `$` 开头，表示引用消费者参数，如：`host = $host`
+
+**示例：**
+
+1. 排除预发布机：
+
+```
+=> host != 172.22.3.91
+```
+
+2. 白名单
+
+> 注意：一个服务只能有一条白名单规则，否则两条规则交叉，就都被筛选掉了
+
+```
+host != 10.20.153.10,10.20.153.11 =>
+```
+
+3. 黑名单：
+
+```
+host = 10.20.153.10,10.20.153.11 =>
+```
+
+4. 服务寄宿在应用上，只暴露一部分的机器，防止整个集群挂掉：
+
+```
+=> host = 172.22.3.1*,172.22.3.2*
+```
+
+5. 为重要应用提供额外的机器：
+
+```
+application != kylin => host != 172.22.3.95,172.22.3.96
+```
+
+6. 读写分离：
+
+```
+method = find*,list*,get*,is* => host = 172.22.3.94,172.22.3.95,172.22.3.96
+method != find*,list*,get*,is* => host = 172.22.3.97,172.22.3.98
+```
+
+7. 前后台分离：
+
+```
+application = bops => host = 172.22.3.91,172.22.3.92,172.22.3.93
+application != bops => host = 172.22.3.94,172.22.3.95,172.22.3.96
+```
+
+8. 隔离不同机房网段：
+
+```
+host != 172.22.3.* => host != 172.22.3.*
+```
+
+9. 提供者与消费者部署在同集群内，本机只访问本机的服务：
+
+```
+=> host = $host
+```
+
+### 脚本路由规则
+
+脚本路由规则 支持 JDK 脚本引擎的所有脚本，比如：javascript, jruby, groovy 等，通过 type=javascript 参数设置脚本类型，缺省为 javascript。
+
+> 注意：脚本没有沙箱约束，可执行任意代码，存在后门风险
+
+```
+"script://0.0.0.0/com.foo.BarService?category=routers&dynamic=false&rule=" + URL.encode("（function route(invokers) { ... } (invokers)）")
+```
+
+基于脚本引擎的路由规则，如：
+
+```javascript
+（function route(invokers) {
+    var result = new java.util.ArrayList(invokers.size());
+    for (i = 0; i < invokers.size(); i ++) {
+        if ("10.20.153.10".equals(invokers.get(i).getUrl().getHost())) {
+            result.add(invokers.get(i));
+        }
+    }
+    return result;
+} (invokers)）; // 表示立即执行方法
+```
+
+### 标签路由规则
+
+标签路由规则  ，当应用选择装配标签路由(TagRouter)之后，一次 dubbo 调用能够根据请求携带的 tag 标签智能地选择对应 tag 的服务提供者进行调用。
+
+> 该特性在 `2.7.0` 以上版本支持
+
+**服务提供者**
+
+1. 给应用装配标签路由器：
+
+```java
+@Bean
+public ApplicationConfig applicationConfig() {
+    ApplicationConfig applicationConfig = new ApplicationConfig();
+    applicationConfig.setName("provider-book");
+    applicationConfig.setQosEnable(false);
+    // instruct tag router
+    Map<String,String> parameters = new HashMap<>();
+    parameters.put(Constants.ROUTER_KEY, "tag");
+    applicationConfig.setParameters(parameters);
+    return applicationConfig;
+}
+```
+
+2. 给应用设置具体的标签：
+
+```java
+@Bean
+public ProviderConfig providerConfig(){
+	ProviderConfig providerConfig = new ProviderConfig();
+	providerConfig.setTag("red");
+	return providerConfig;
+}
+```
+
+应用未装配 tag 属性或服务提供者未设置 tag 属性，都将被认为是默认的应用，这些默认应用将会，"在调用无法匹配 provider 时"，当作降级方案。
+
+**服务消费者**
+
+```java
+RpcContext.getContext().setAttachment(Constants.REQUEST_TAG_KEY,"red");
+```
+
+请求标签的作用域为每一次 invocation，使用 attachment 来传递请求标签，注意保存在 attachment 中的值将会在一次完整的远程调用中持续传递，得益于这样的特性，我们只需要在起始调用时，通过一行代码的设置，达到标签的持续传递。
+
+> 目前仅仅支持 hardcoding 的方式设置 requestTag。注意到 RpcContext 是线程绑定的，优雅的使用 TagRouter 特性，建议通过 servlet 过滤器(在 web 环境下)，或者定制的 SPI 过滤器设置 requestTag。
+
+**规则描述**
+
+1. request.tag=red 时优先选择 tag=red 的 provider。若集群中不存在与请求标记对应的服务，可以降级请求 tag=null 的 provider，即默认 provider。
+2. request.tag=null 时，只会匹配 tag=null 的 provider。即使集群中存在可用的服务，若 tag 不匹配就无法调用，这与规则1不同，携带标签的请求可以降级访问到无标签的服务，但不携带标签/携带其他种类标签的请求永远无法访问到其他标签的服务。
+
 
 
 ## 34 配置规则
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/config-rule.html
+
+向注册中心写入动态配置覆盖规则 。该功能通常由监控中心或治理中心的页面完成。
+
+> `2.2.0` 以上版本支持 
+
+```java
+RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
+Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
+registry.register(URL.valueOf("override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&timeout=1000"));
+```
+
+其中：
+
+- `override://` 表示数据采用覆盖方式，支持 `override` 和 `absent`，可扩展，**必填**。
+- `0.0.0.0` 表示对所有 IP 地址生效，如果只想覆盖某个 IP 的数据，请填入具体 IP，**必填**。
+- `com.foo.BarService` 表示只对指定服务生效，**必填**。
+- `category=configurators` 表示该数据为动态配置类型，**必填**。
+- `dynamic=false` 表示该数据为持久数据，当注册方退出时，数据依然保存在注册中心，**必填**。
+- `enabled=true` 覆盖规则是否生效，可不填，缺省生效。
+- `application=foo` 表示只对指定应用生效，可不填，表示对所有应用生效。
+- `timeout=1000` 表示将满足以上条件的 `timeout` 参数的值覆盖为 1000。如果想覆盖其它参数，直接加在 `override` 的 URL 参数上。
+
+### 示例：
+
+禁用提供者：(通常用于临时踢除某台提供者机器，相似的，禁止消费者访问请使用路由规则)
+
+```
+override://10.20.153.10/com.foo.BarService?category=configurators&dynamic=false&disbaled=true
+```
+
+调整权重：(通常用于容量评估，缺省权重为 100)
+
+```
+ override://10.20.153.10/com.foo.BarService?category=configurators&dynamic=false&weight=200
+```
+
+调整负载均衡策略：(缺省负载均衡策略为 random)
+
+```
+override://10.20.153.10/com.foo.BarService?category=configurators&dynamic=false&loadbalance=leastactive
+```
+
+服务降级：(通常用于临时屏蔽某个出错的非关键服务)
+
+```
+override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&mock=force:return+null
+```
 
 
 
 ## 35 服务降级
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/service-downgrade.html
+
+可以通过服务降级功能  临时屏蔽某个出错的非关键服务，并定义降级后的返回策略。
+
+> `2.2.0` 以上版本支持
+
+向注册中心写入动态配置覆盖规则：
+
+```java
+RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
+Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
+registry.register(URL.valueOf("override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&mock=force:return+null"));
+```
+
+其中：
+
+- `mock=force:return+null` 表示消费方对该服务的方法调用都直接返回 null 值，不发起远程调用。用来屏蔽不重要服务不可用时对调用方的影响。
+- 还可以改为 `mock=fail:return+null` 表示消费方对该服务的方法调用在失败后，再返回 null 值，不抛异常。用来容忍不重要服务不稳定时对调用方的影响。
+
 
 
 ## 36 优雅停机
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/graceful-shutdown.html
+
+Dubbo 是通过 JDK 的 ShutdownHook 来完成优雅停机的，所以如果用户使用 `kill -9 PID` 等强制关闭指令，是不会执行优雅停机的，只有通过 `kill PID` 时，才会执行。
+
+### 原理
+
+**服务提供方**
+
+- 停止时，先标记为不接收新请求，新请求过来时直接报错，让客户端重试其它机器。
+- 然后，检测线程池中的线程是否正在运行，如果有，等待所有线程执行完成，除非超时，则强制关闭。
+
+**服务消费方**
+
+- 停止时，不再发起新的调用请求，所有新的调用在客户端即报错。
+- 然后，检测有没有请求的响应还没有返回，等待响应返回，除非超时，则强制关闭。
+
+**设置方式**
+
+设置优雅停机超时时间，缺省超时时间是 10 秒，如果超时则强制关闭。
+
+```
+# dubbo.properties
+dubbo.service.shutdown.wait=15000
+```
+
+如果 ShutdownHook 不能生效，可以自行调用，**使用tomcat等容器部署的場景，建议通过扩展ContextListener等自行调用以下代码实现优雅停机**：
+
+```
+ProtocolConfig.destroyAll();
+```
+
+
 
 
 
 ## 37 主机绑定
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/hostname-binding.html
+
+**查找顺序**
+
+缺省主机 IP 查找顺序：
+
+- 通过 `LocalHost.getLocalHost()` 获取本机地址。
+- 如果是 `127.*` 等 loopback 地址，则扫描各网卡，获取网卡 IP。
+
+**主机配置**
+
+注册的地址如果获取不正确，比如需要注册公网地址，可以：
+
+1. 可以在 `/etc/hosts` 中加入：机器名 公网 IP，比如：
+
+```
+test1 205.182.23.201
+```
+
+2. 在 `dubbo.xml` 中加入主机地址的配置：
+
+```xml
+<dubbo:protocol host="205.182.23.201">
+```
+
+3. 或在 `dubbo.properties` 中加入主机地址的配置：
+
+```
+dubbo.protocol.host=205.182.23.201
+```
+
+**端口配置**
+
+缺省主机端口与协议相关：
+
+| 协议       | 端口  |
+| ---------- | ----- |
+| dubbo      | 20880 |
+| rmi        | 1099  |
+| http       | 80    |
+| hessian    | 80    |
+| webservice | 80    |
+| memcached  | 11211 |
+| redis      | 6379  |
+
+可以按照下面的方式配置端口：
+
+1. 在 `dubbo.xml` 中加入主机地址的配置：
+
+```xml
+<dubbo:protocol name="dubbo" port="20880">
+```
+
+2. 或在 `dubbo.properties` 中加入主机地址的配置：
+
+```
+dubbo.protocol.dubbo.port=20880
+```
+
 
 
 ## 38 日志适配
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/logger-strategy.html
+
+自 2.2.1 开始，dubbo 开始内置 log4j、slf4j、jcl、jdk 这些日志框架的适配，也可以通过以下方式显示配置日志输出策略：
+
+1. 命令行
+
+```
+  java -Ddubbo.application.logger=log4j
+```
+
+2. 在 `dubbo.properties` 中指定
+
+```
+  dubbo.application.logger=log4j
+```
+
+3. 在 `dubbo.xml` 中配置
+
+```xml
+  <dubbo:application logger="log4j" />
+```
 
 
 
 ## 39 访问日志
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/accesslog.html
+
+如果你想记录每一次请求信息，可开启访问日志，类似于apache的访问日志。**注意**：此日志量比较大，请注意磁盘容量。
+
+将访问日志输出到当前应用的log4j日志：
+
+```xml
+<dubbo:protocol accesslog="true" />
+```
+
+将访问日志输出到指定文件：
+
+```xml
+<dubbo:protocol accesslog="http://10.20.160.198/wiki/display/dubbo/foo/bar.log" />
+```
+
 
 
 ## 40 服务容器
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/service-container.html
+
+服务容器是一个 standalone 的启动程序，因为后台服务不需要 Tomcat 或 JBoss 等 Web 容器的功能，如果硬要用 Web 容器去加载服务提供方，增加复杂性，也浪费资源。
+
+服务容器只是一个简单的 Main 方法，并加载一个简单的 Spring 容器，用于暴露服务。
+
+服务容器的加载内容可以扩展，内置了 spring, jetty, log4j 等加载，可通过[容器扩展点](http://dubbo.apache.org/books/dubbo-dev-book/impls/container.html)进行扩展。配置配在 java 命令的 -D 参数或者 `dubbo.properties` 中。
+
+### 容器类型
+
+**Spring Container**
+
+- 自动加载 `META-INF/spring` 目录下的所有 Spring 配置。
+- 配置 spring 配置加载位置：
+
+```
+dubbo.spring.config=classpath*:META-INF/spring/*.xml
+```
+
+**Jetty Container**
+
+- 启动一个内嵌 Jetty，用于汇报状态。
+- 配置：
+  - `dubbo.jetty.port=8080`：配置 jetty 启动端口
+  - `dubbo.jetty.directory=/foo/bar`：配置可通过 jetty 直接访问的目录，用于存放静态文件
+  - `dubbo.jetty.page=log,status,system`：配置显示的页面，缺省加载所有页面
+
+**Log4j Container**
+
+- 自动配置 log4j 的配置，在多进程启动时，自动给日志文件按进程分目录。
+- 配置：
+  - `dubbo.log4j.file=/foo/bar.log`：配置日志文件路径
+  - `dubbo.log4j.level=WARN`：配置日志级别
+  - `dubbo.log4j.subdirectory=20880`：配置日志子目录，用于多进程启动，避免冲突
+
+
+
+### 容器启动
+
+缺省只加载 spring
+
+```sh
+java org.apache.dubbo.container.Main
+```
+
+通过 main 函数参数传入要加载的容器
+
+```
+java org.apache.dubbo.container.Main spring jetty log4j
+```
+
+通过 JVM 启动参数传入要加载的容器
+
+```
+java org.apache.dubbo.container.Main -Ddubbo.container=spring,jetty,log4j
+```
+
+通过 classpath 下的 `dubbo.properties` 配置传入要加载的容器
+
+```
+dubbo.container=spring,jetty,log4j
+```
 
 
 
 ## 41 Reference Config 缓存
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/reference-config-cache.html
+
+`ReferenceConfig` 实例很重，封装了与注册中心的连接以及与提供者的连接，需要缓存。否则重复生成 `ReferenceConfig` 可能造成性能问题并且会有内存和连接泄漏。在 API 方式编程时，容易忽略此问题。
+
+因此，自 `2.4.0` 版本开始， dubbo 提供了简单的工具类 `ReferenceConfigCache`用于缓存 `ReferenceConfig`实例。
+
+使用方式如下：
+
+```java
+ReferenceConfig<XxxService> reference = new ReferenceConfig<XxxService>();
+reference.setInterface(XxxService.class);
+reference.setVersion("1.0.0");
+......
+ReferenceConfigCache cache = ReferenceConfigCache.getCache();
+// cache.get方法中会缓存 Reference对象，并且调用ReferenceConfig.get方法启动ReferenceConfig
+XxxService xxxService = cache.get(reference);
+// 注意！ Cache会持有ReferenceConfig，不要在外部再调用ReferenceConfig的destroy方法，
+// 导致Cache内的ReferenceConfig失效！
+// 使用xxxService对象
+xxxService.sayHello();
+```
+
+消除 Cache 中的 `ReferenceConfig`，将销毁 `ReferenceConfig` 并释放对应的资源。
+
+```java
+ReferenceConfigCache cache = ReferenceConfigCache.getCache();
+cache.destroy(reference);
+```
+
+缺省 `ReferenceConfigCache` 把相同服务 Group、接口、版本的 `ReferenceConfig` 认为是相同，缓存一份。即以服务 Group、接口、版本为缓存的 Key。
+
+可以修改这个策略，在 `ReferenceConfigCache.getCache` 时，传一个 `KeyGenerator`。详见 `ReferenceConfigCache` 类的方法。
+
+```java
+KeyGenerator keyGenerator = new ...
+ReferenceConfigCache cache = ReferenceConfigCache.getCache(keyGenerator );
+```
+
 
 
 ## 42 分布式事务
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/distributed-transaction.html
+
+> 本功能暂未实现
 
 
 
 ## 43 线程栈自动dump
 
+http://dubbo.apache.org/zh-cn/docs/user/demos/dump.html
+
+当业务线程池满时，我们需要知道线程都在等待哪些资源、条件，以找到系统的瓶颈点或异常点。dubbo通过Jstack自动导出线程堆栈来保留现场，方便排查问题
+
+默认策略:
+
+- 导出路径，user.home标识的用户主目录
+- 导出间隔，最短间隔允许每隔10分钟导出一次
+
+指定导出路径：
+
+```
+# dubbo.properties
+dubbo.application.dump.directory=/tmp
+```
+
+```xml
+<dubbo:application ...>
+    <dubbo:parameter key="dump.directory" value="/tmp" />
+</dubbo:application>
+```
+
 
 
 ## 44 Netty4
+
+http://dubbo.apache.org/zh-cn/docs/user/demos/netty4.html
+
+dubbo 2.5.6版本新增了对netty4通信模块的支持，启用方式如下
+
+provider端：
+
+```xml
+<dubbo:protocol server="netty4" />
+```
+
+或
+
+```xml
+<dubbo:provider server="netty4" />
+```
+
+consumer端：
+
+```xml
+<dubbo:consumer client="netty4" />
+```
+
+**注意**
+
+1. provider端如需不同的协议使用不同的通信层框架，请配置多个protocol分别设置
+2. consumer端请使用如下形式：
+
+```xml
+<dubbo:consumer client="netty">
+  <dubbo:reference />
+</dubbo:consumer>
+```
+
+```xml
+<dubbo:consumer client="netty4">
+  <dubbo:reference />
+</dubbo:consumer>
+```
 
 
 
 ## 45 Kryo和FST序列化
 
+### 启用Kryo和FST
 
+使用Kryo和FST非常简单，只需要在dubbo RPC的XML配置中添加一个属性即可：
 
+```xml
+<dubbo:protocol name="dubbo" serialization="kryo"/>
+```
 
+```xml
+<dubbo:protocol name="dubbo" serialization="fst"/>
+```
 
+### 注册被序列化类
 
+要让Kryo和FST完全发挥出高性能，最好将那些需要被序列化的类注册到dubbo系统中，例如，我们可以实现如下回调接口：
 
+```java
+public class SerializationOptimizerImpl implements SerializationOptimizer {
 
+    public Collection<Class> getSerializableClasses() {
+        List<Class> classes = new LinkedList<Class>();
+        classes.add(BidRequest.class);
+        classes.add(BidResponse.class);
+        classes.add(Device.class);
+        classes.add(Geo.class);
+        classes.add(Impression.class);
+        classes.add(SeatBid.class);
+        return classes;
+    }
+}
+```
 
+然后在XML配置中添加：
 
+```xml
+<dubbo:protocol name="dubbo" serialization="kryo" optimizer="org.apache.dubbo.demo.SerializationOptimizerImpl"/>
+```
 
+在注册这些类后，序列化的性能可能被大大提升，特别针对小数量的嵌套对象的时候。
 
+当然，在对一个类做序列化的时候，可能还级联引用到很多类，比如Java集合类。针对这种情况，我们已经自动将JDK中的常用类进行了注册，所以你不需要重复注册它们（当然你重复注册了也没有任何影响），包括：
 
+```java
+GregorianCalendar
+InvocationHandler
+BigDecimal
+BigInteger
+Pattern
+BitSet
+URI
+UUID
+HashMap
+ArrayList
+LinkedList
+HashSet
+TreeSet
+Hashtable
+Date
+Calendar
+ConcurrentHashMap
+SimpleDateFormat
+Vector
+BitSet
+StringBuffer
+StringBuilder
+Object
+Object[]
+String[]
+byte[]
+char[]
+int[]
+float[]
+double[]
+```
 
-
-
+由于注册被序列化的类仅仅是出于性能优化的目的，所以即使你忘记注册某些类也没有关系。事实上，即使不注册任何类，Kryo和FST的性能依然普遍优于hessian和dubbo序列化。
 
 
 
