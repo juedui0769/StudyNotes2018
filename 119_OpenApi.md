@@ -762,6 +762,7 @@ nohup sh ./mqbroker -n localhost:9876 &
 tail -f ~/logs/rocketmqlogs/broker.log 
 
 # 停止 ， 貌似应该用 root 用户？？
+cd /opt/rocketmq-all-4.3.0
 sh bin/mqshutdown broker
 sh bin/mqshutdown namesrv
 
@@ -900,6 +901,123 @@ mvn clean package -Pdev
 
 ## 运行
 
+### tomcat日志
+
+参考 https://www.cnblogs.com/Warmsunshine/p/6236076.html ， windows下，tomcat控制台日志记录到日志文件中。
+
+参考 https://blog.csdn.net/qq_28938933/article/details/76849406 ， 结合上面两篇文章，修改为如下的样子：
+
+参考 https://blog.csdn.net/u013986802/article/details/72381743 ， **cmd输出日期及格式** ， 继续修改：
+
+```sh
+# 修改 bin/start.bat
+
+rem call "%EXECUTABLE%" start %CMD_LINE_ARGS%
+rem call "%EXECUTABLE%" run %CMD_LINE_ARGS% >> ..\logs\catalina.log
+rem call "%EXECUTABLE%" run %CMD_LINE_ARGS% >> ..\logs\catalina.%date:~0,4%-%date:~5,2%-%date:~8,2%.log
+
+# 以下是最终的形式
+call "%EXECUTABLE%" run %CMD_LINE_ARGS% >> ..\logs\catalina.%date:~0,4%%date:~5,2%%date:~8,2%%time:~0,2%%time:~3,2%%time:~6,2%.out
+
+```
+
+
+
+### 启动顺序
+
+1. 192.168.3.26 ， 启动 mysql
+2. 192.168.3.20 ， 启动 rocketmq
+
+```sh
+# 启动
+cd /opt/rocketmq-all-4.3.0/bin
+
+nohup sh ./mqnamesrv &
+tail -f ~/logs/rocketmqlogs/namesrv.log
+
+nohup sh ./mqbroker -n localhost:9876 &
+tail -f ~/logs/rocketmqlogs/broker.log 
+
+# 停止 ， 貌似应该用 root 用户？？
+sh bin/mqshutdown broker
+sh bin/mqshutdown namesrv
+
+jps
+```
+
+3. 192.168.3.20 ， 启动 redis 集群
+
+集群即使停止了，只要不删除 nodes，再次启动时，仍然会以集群的方式互联。
+
+```sh
+# 启动
+cd /home/wxg/redis-cluster/7000
+nohup redis-server ./redis.conf &
+cd ../7001
+nohup redis-server ./redis.conf &
+cd ../7002
+nohup redis-server ./redis.conf &
+cd ../7003
+nohup redis-server ./redis.conf &
+cd ../7004
+nohup redis-server ./redis.conf &
+cd ../7005
+nohup redis-server ./redis.conf &
+
+ps -ef | grep redis
+
+# 停止
+redis-cli -p 7000 SHUTDOWN
+redis-cli -p 7001 SHUTDOWN
+redis-cli -p 7002 SHUTDOWN
+redis-cli -p 7003 SHUTDOWN
+redis-cli -p 7004 SHUTDOWN
+redis-cli -p 7005 SHUTDOWN
+```
+
+
+
+4. 192.168.3.20 ， 启动 crt-apigateway
+
+```sh
+# 启动
+cd /home/wxg/crt-apigateway
+sh start.sh
+
+ps -ef | grep crt-apigateway
+
+# 停止
+sh stop.sh
+```
+
+5. apiinterface
+
+```sh
+# 在windows上，启动 apiinterface
+cd E:\server\tomcat7_6088\bin
+startup.bat
+
+http://localhost:6088/crt-apiinterface/
+```
+
+6. apiconsole
+
+```sh
+# 在windows上，启动 apiinterface
+E:\server\tomcat7_7080\bin
+startup.bat
+
+http://localhost:7080/crt-apiconsole
+```
+
+
+
+
+
+
+
+
+
 ### mysql
 
 ```sh
@@ -960,6 +1078,18 @@ Java HotSpot(TM) 64-Bit Server VM warning: MaxNewSize (524288k) is equal to or g
 2018-12-28 18:30:24.060 3839 [main] INFO  c.a.druid.pool.DruidDataSource - {dataSource-1} inited
 2018-12-28 18:30:28.512 8291 [main] INFO  c.c.openapi.apigateway.StartServer - 服务启动完成~~~~监听端口：8081
 ```
+
+### apiinterface
+
+interface是运行在"E:\server\tomcat7_6088"中，console、pub、sub 都依赖 interface。
+
+### apiconsole
+
+2018年12月29日13:16:59，将`apiconsole`运行下windows下的tomcat中，"E:\server\tomcat7_7080"，其依赖`apiinterface`，interface是运行在"E:\server\tomcat7_6088"中。
+
+没有数据，创建一个"admin"用户，密码没有使用“盐”，所以比较好构造。在mysql中创建一个用户即可。
+
+系统是能够进入了，但是，没有数据，所以，也没什么作用。只是简单的点击一下功能，看下是否正常： 因此，发现了一些数据库表结构的问题，缺少`api_dict_catalog`, `api_dict_item`, `api_sys`, 这三张表，另外 `api_app`， `api_org` 缺少字段，还好，可以根据 mapper.xml 来补充。截止目前，apiconsole是运行良好了，点击前台页面不会报错了。但是，只是一个空架子。
 
 
 
