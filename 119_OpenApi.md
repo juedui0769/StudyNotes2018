@@ -1,6 +1,6 @@
 # OpenApi
 
-# vim
+## vim
 
 参考： https://gitee.com/juedui0769/MyDocs/blob/master/Linux/Linux998_vim.md
 
@@ -1090,6 +1090,22 @@ interface是运行在"E:\server\tomcat7_6088"中，console、pub、sub 都依赖
 没有数据，创建一个"admin"用户，密码没有使用“盐”，所以比较好构造。在mysql中创建一个用户即可。
 
 系统是能够进入了，但是，没有数据，所以，也没什么作用。只是简单的点击一下功能，看下是否正常： 因此，发现了一些数据库表结构的问题，缺少`api_dict_catalog`, `api_dict_item`, `api_sys`, 这三张表，另外 `api_app`， `api_org` 缺少字段，还好，可以根据 mapper.xml 来补充。截止目前，apiconsole是运行良好了，点击前台页面不会报错了。但是，只是一个空架子。
+
+
+
+## mybatis
+
+https://www.cnblogs.com/fangjian0423/p/mybatis-interceptor.html ， MyBatis拦截器原理探究
+
+
+
+## JDK动态代理
+
+https://www.cnblogs.com/MOBIN/p/5597215.html， 这篇文章对JDK的动态代理解释的比较详细，深入源码。
+
+
+
+
 
 
 
