@@ -874,6 +874,151 @@ redis.properties
 
 redis.xml
 
+```java
+com.xxx.openapi.apiinterface
+|- controller
+	|- base
+		|- CommonController
+	|- common
+		|- ApiUserController
+		|- LoginController
+	|- console
+		|- ApiAppController
+		|- ApiCatalogController
+		|- ApiDictController
+		|- ApiInterfaceAuthController
+		|- ApiInterfaceController
+		|- ApiLogController
+		|- ApiOrgController
+		|- ApiOrgSyncController
+		|- ApiSubInterfaceController
+		|- ApiSysController
+		|- ApiSysSyncController
+	|- converter
+		|- JsonMapper
+		|- JsonUtils
+	|- pub
+		|- PubTestApiController
+	|- sub
+		|- SubTestApiController
+	|- ws
+		|- ApiXlsStylesheetController
+		|- ApiXlsTplController
+	|- TestController
+|- interceptor
+	|- LogRecordAspect
+	|- PageInterceptor
+	|- SvrHandlerExceptionResolver
+|- Predicate
+	|- ApiAuthorizationPredicate
+|- result
+	|- ErrorCodeConsField
+	|- ResultErrorInfo
+	|- ResultInfo
+	|- ResultInofUtil
+	|- ResultSuccessInfo
+|- utils
+	|- Pager
+//-------------
+src/main/resources
+|- i18n
+|- props
+	|- openapi-cfg-app.properties
+	|- openapi-cfg-jdbc.properties
+	|- openapi-cfg-redis.properties
+|- spring
+	|- applicationContext-datasource.xml
+	|- applicationContext-mybatis.xml
+	|- applicationContext-tx.xml
+	|- spring-context-redis.xml
+|- applicationContext-master.xml
+|- logback.xml
+|- mybatis.cfg.xml
+|- spring-mvc.xml
+//-------------
+src/main/webapp
+```
+
+#### CommonController
+
+![](./imgs/119_apiinterface_CommonController.png)
+
+`CommonController`，几乎是这个模块（`apiinterface`）中大部分类的父类。
+
+成员变量`LOGGERS_MAP` ： 如上图，`LOGGERS_MAP`是 `Logger` 的Map容器，有两个`getLogger()`方法，一个是`private`的，一个是`protected`的，与此相关的一个属性是`controllerClass`，这个属性在构造方法`CommonController()`中被初始化。
+
+方法`checkUserIdIsNull()` ： 从参数`requestMap : Map<String, Object>`中获取`userId`和`orgId`，只要`userId`不会空，就根据`userId`调用`apiUserService`从数据库查询出`ApiUser`对象。如果`userType == 1`将`orgId`设为空，`1`是管理员。（这里的`1`应该定义为常量，或`enum`，便于代码回顾）
+
+方法`getMapFromServletRequest()` ： 从参数 `request : HttpServletRequest`中获取请求信息…… 如果`pageIndex`为空，就设置为`1`；如果`pageSize`为空，就设置为`10`。
+
+```java
+protected Map<String ,Object> getMapFromServletRequest(HttpServletRequest request) {
+	Map<String, String[]> requestMap = request.getParameterMap();
+	Map<String ,Object> resultMap = new HashMap<String ,Object>();
+	if (requestMap != null) {
+		for (String key : requestMap.keySet()) {
+			String[] values = requestMap.get(key);
+			resultMap.put(key, values.length == 1 ? values[0].trim() : values);
+		}
+	}
+    // ...
+```
+
+方法`getMessage()`，调用了spring的`MessageSource`类，在这个代码里只处理了中文`Locale.CHINA`。
+
+方法`handleHttpMessageNotReadableException()`，两个注解`@ExceptionHandler`，`@ResponseBody`，
+
+```java
+@ExceptionHandler({HttpMessageNotReadableException.class,JSONException.class})
+@ResponseBody
+public Object handleHttpMessageNotReadableException(RuntimeException ex) {
+	String errorMesssage = "JSON convert failure: "+ex.getLocalizedMessage();
+	return ResultInfoUtil.setErrorInfo(ErrorCodeConsField.ERROR_MSG_90001,
+			getMessage(ErrorCodeConsField.ERROR_MSG_90001)+errorMesssage);
+}
+```
+
+方法`handleMethodArgumentNotValidException()` ，代码如下：
+
+```java
+@ExceptionHandler(MethodArgumentNotValidException.class)
+@ResponseBody
+public Object handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+	BindingResult bindingResult = ex.getBindingResult();
+	String errorMesssage = "Invalid Request:";
+
+	for (FieldError fieldError : bindingResult.getFieldErrors()) {
+		errorMesssage += fieldError.getDefaultMessage() + ",";
+	}
+	if(errorMesssage.lastIndexOf(",") == errorMesssage.length()-1){
+		errorMesssage = errorMesssage.substring(0, errorMesssage.length()-1);
+	}
+	LOGGER.error(bindingResult.getFieldError().getDefaultMessage());
+	return ResultInfoUtil.setErrorInfo(ErrorCodeConsField.ERROR_MSG_90001, 
+			getMessage(ErrorCodeConsField.ERROR_MSG_90001)+errorMesssage);
+}
+```
+
+`CommonController`是其他controller的父类，抽象了子类都必须处理的业务逻辑，……
+
+#### @ExceptionHandler
+
+参考，https://www.cnblogs.com/shuimuzhushui/p/6791600.html， https://blog.csdn.net/liujia120103/article/details/75126124
+
+
+
+#### ApiUserController
+
+![](./imgs/119_apiinterface_ApiUserController.png)
+
+`ApiUserController`继承自`CommonController`，三个`private`属性（都是service的引用），剩下的公共方法都是具体的业务方法（其他的controller类和这个类差不多）。如上图
+
+
+
+
+
+
+
 
 
 ### apiservice
