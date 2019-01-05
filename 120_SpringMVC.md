@@ -76,6 +76,96 @@ P94， `BeanWrapper`是 Spring 提供的一个用于操作 JavaBean 属性的工
 
 ##### webApplicationContext
 
+设置`webApplicationContext`一共有三种方式：
+
+1. Servlet3.0 之后可以在程序中使用`ServletContext.addServlet`方式注册 Servlet，可以在新建`FrameworkServlet`和其子类的时候通过构造方法传递已经准备好的的`webApplicationContext`。
+
+2. 在`web.xml`文件中配置。比如，在 ServletContext 中有一个叫`haha`的`webApplicationContext`，可以按如下方式配置到 SpringMVC 中。
+
+```xml
+<!-- WEB-INF/web.xml -->
+<servlet>
+	<servlet-name>let'sGo</servlet-name>
+	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+	<init-param>
+		<param-name>contextAttribute</param-name>
+		<param-value>haha</param-value>
+	</init-param>
+	<load-on-startup>1</load-on-startup>
+</servlet>
+```
+
+还有第三种方式，书中罗列大片代码辅助说明，但是我没看懂……
+
+##### DispatcherServlet
+
+![](./imgs/120_smvc_DispatcherServlet02.png)
+
+`DispatcherServlet.properties`， 可以使用`ctrl + shift + R`在`IntelliJ IDEA`中搜索这个文件。
+
+- 这里定义了不同组件的类型（class全限定名），默认配置
+- 默认配置并不是最优配置，也不是 spring 的推荐配置，只是在没有配置时可以有个默认值，不至于空着。
+
+##### 命令空间配置
+
+P104，在 spring 的 xml 文件中通过命名空间配置的标签是怎么解析的
+
+命名空间配置的标签 ： `c:`， `p:` ……
+
+#### 第10章
+
+##### FrameworkServlet
+
+![](./imgs/120_smvc_FrameworkServlet_01.png)
+
+如上图，`FrameworkServlet`在`service(req, resp)`中处理所有的请求，实际工作是交给`processRequest(req, resp)`来处理的，`processRequest()`又将工作交给`doService(req, resp)`来处理， `doService()`是抽象方法，实际的处理会转交给子类来处理。
+
+`RequestAttributes`是一个接口，处理`request`、`session`中的属性（Attribute），看到不要感到陌生，`ServletRequestAttributes`是其具体实现。
+
+`FrameworkServlet`的内部调用序列图，如下：
+
+![](./imgs/120_smvc_seq_FrameServlet.png)
+
+首先是`service()`方法被调用，然后`service()`方法调用`processRequest()`方法，`processRequest()`内部又调用`doService()`方法（这是一个抽象方法，具体逻辑由子类实现），然后在`finally`代码块中调用`resetContextHolders()`方法，最终会调用`publishRequestHandlerEvent()`方法！
+
+##### LocaleContextHolder
+
+![](./imgs/120_smvc_LocaleContextHolder.png)
+
+在程序中需要用到`Locale`的时候，首先想到的是`request.getLocale()`，这是最直接的方法。但是，有时候在 service 层需要用到 `Locale` ，此时没有 `request`，就可以使用`LocaleContextHolder.getLocale()`获得。
+
+##### RequestContextHolder
+
+![](./imgs/120_smvc_RequestContextHolder.png)
+
+同`LocaleContextHolder`一样，`RequestContextHolder`也是为方便获取 attribute 的。
+
+##### publishRequestHandledEvent
+
+`publishRequestHandledEvent(req, resp, startTime, Throwable) : void`内部发布了一个`ServletRequestHandledEvent`消息。
+
+当`publishEvents : boolean`设置为`true`时，请求处理结束后就会发出这个消息。默认为`true`，可以在`web.xml`中配置。
+
+我们可以通过监听这个事件来做一些事情，比如，记录日志，如下：
+
+```java
+@Component
+public class ServletRequestHandlerEventListener
+        implements ApplicationListener<ServletRequestHandledEvent> {
+    final static Logger logger = LoggerFactory
+            .getLogger("ServletRequestHandlerEventListener");
+    @Override
+    public void onApplicationEvent(ServletRequestHandledEvent event) {
+        logger.info(event.getDescription());
+    }
+}
+```
+
+只要简单的继承`ApplicationListener`，并且把自己要做的事情写到`onApplicationEvent(...)`里面就行了。别忘了在类上面标注`@Component`。
+
+
+
+
 
 
 
