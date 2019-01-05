@@ -14,6 +14,73 @@
 
 1.5.4 反向代理， P14 反向代理服务器和代理服务器的区别
 
+#### 第8章
+
+Spring MVC之初体验
+
+`web.xml`中配置`DispatcherServlet`，可以设置`contextConfigLocation`参数来指定Spring MVC配置文件的位置，默认是`WEB-INF/[ServletName]-servlet.xml`文件。这里使用默认值，也就是`WEB-INF/let'sGo-servlet.xml`文件。
+
+let'sGo-servlet.xml
+
+- `<mvc:annotation-driven/>`是Spring MVC提供的一键式的配置方法
+- `context:component-scan`标签：扫描通过注释配置的类
+- 另外还有`context:include-filter`，可以通过配置此标签来设置只扫描`@Controller`
+
+```xml
+<context:component-scan base-package="com.excelib" use-default-filters="false">
+	<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+</context:component-scan>
+```
+
+#### 第9章
+
+`XxxAware`在spring里表示对`Xxx`可以感知，通俗点的解释就是：如果在某个类里面想要使用spring的一些东西，就可以通过实现`XxxAware`接口告诉spring，spring看到后就会给你送过来，而接受的方式是通过实现接口唯一的方法`setXxx()`。
+
+**【Debug】**  第9章，讲到`Debug`调试的问题，我使用的是Maven的`mvn tomcat7:run`，使用的是`IntelliJ IDEA`，一开始不知道，后来百度一下，发现非常简单： 先选择右侧的Maven，然后点击展开，再点击到`tomcat7:run`，右键选择`Debug`方式启动，就可以开启`Debug`之旅！
+
+##### HttpServletBean
+
+![](./imgs/120_springmvc_HttpServletBean.png)
+
+书中的介绍不多，没抓住知识点，所以也就不知道如何写。
+
+##### BeanWraper
+
+```java
+public class BeanWrapperTest {
+    static class User {
+        private String userName;
+        public String getUserName() {
+            return userName;
+        }
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+    }
+
+    public static void main(String[] args) {
+        User user = new User();
+        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(user);
+        bw.setPropertyValue("userName", "张三");
+        System.out.println(user.getUserName());
+        PropertyValue value = new PropertyValue("userName", "李四");
+        bw.setPropertyValue(value);
+        System.out.println(user.getUserName());
+    }
+}
+```
+
+P94， `BeanWrapper`是 Spring 提供的一个用于操作 JavaBean 属性的工具，使用它可以直接修改一个对象的属性，示例如上。简单的类图如下：
+
+![](./imgs/120_springmvc_BeanWrapper.png)
+
+##### webApplicationContext
+
+
+
+
+
+
 ### uml图
 
 #### Servlet
@@ -47,6 +114,12 @@ P37 6.1 Servlet 接口， 如上图
     <load-on-startup>1</load-on-startup>
 </servlet>
 ```
+
+#### DispatcherServlet
+
+![](./imgs/120_springmvc_DispatcherServlet.png)
+
+（上图采用`draw.io`绘制）
 
 
 
