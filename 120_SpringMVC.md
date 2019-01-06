@@ -163,9 +163,13 @@ public class ServletRequestHandlerEventListener
 
 只要简单的继承`ApplicationListener`，并且把自己要做的事情写到`onApplicationEvent(...)`里面就行了。别忘了在类上面标注`@Component`。
 
+##### DispatcherServlet
 
+![](./imgs/120_springmvc_DispatcherServlet.png)
 
+如上图，`DispatcherServlet`继承自`FrameworkServlet`。
 
+第10章， 10.3 `DispatcherServlet`，……
 
 
 
@@ -246,9 +250,100 @@ mvn clean package
 mvn tomcat7:run
 ```
 
-按以上的命令启动tomcat，在浏览器访问 http://localhost:9090/
+按以上的命令启动tomcat，在浏览器访问 http://localhost:9090/，如果想要以`DEBUG`方式启动，在`IntelliJ IDEA`中可以在右侧Maven视图中选择`tomcat7:run`，然后右键以`Debug`方式启动。
 
 使用 https://google.suanfazu.com/ 搜索谷歌！
+
+## getRequest()
+
+```java
+public void test01() {
+	(
+		(FlashMap)(
+			(ServletRequestAttributes)RequestContextHolder.getRequestAttributes()
+		).getRequest().getAttribute(DispatcherServlet.OUTPUT_FLASH_MAP_ATTRIBUTE)
+	).put("name", "张三丰");
+}
+```
+
+以上代码来自，第10章 P116，首先从`RequestContextHolder`中获取`ServletRequestAttributes`（需要转义），然后在`ServletRequestAttributes`中有方法`getRequest()`。将上面的代码展开就是下面的形式：
+
+```java
+RequestAttributes reqAttributes = RequestContextHolder.getRequestAttributes();
+ServletRequestAttributes requestAttributes = (ServletRequestAttributes) reqAttributes;
+HttpServletRequest request = requestAttributes.getRequest();
+Object attribute = request.getAttribute(DispatcherServlet.OUTPUT_FLASH_MAP_ATTRIBUTE);
+FlashMap flashMap = (FlashMap) attribute;
+flashMap.put("name", "张三丰");
+```
+
+![](./imgs/120_smvc_getRequest.png)
+
+这个小节的主题是`getRequest()`，其他的都不关心，`getRequestAttributes()`方法是`RequestContextHolder`类的`static`方法，返回`RequestAttributes`接口，`ServletRequestAttributes`是它的实现类，在`ServletRequestAttributes`就有获取`HttpServletRequest`的方法`getRequest()`，如上图！
+
+## 数据传输（redirect）
+
+```java
+RequestAttributes reqAttributes = RequestContextHolder.getRequestAttributes();
+ServletRequestAttributes requestAttributes = (ServletRequestAttributes) reqAttributes;
+HttpServletRequest request = requestAttributes.getRequest();
+Object attribute = request.getAttribute(DispatcherServlet.OUTPUT_FLASH_MAP_ATTRIBUTE);
+FlashMap flashMap = (FlashMap) attribute;
+
+flashMap.put("name", "张三丰");
+```
+
+![](./imgs/120_smvc_DispatcherServlet03.png)
+
+> INPUT_FLASH_MAP_ATTRIBUTE
+>
+> Name of request attribute that holds a read-only Map with "input" flash attributes saved by a previous request, if any.   保存只读映射的请求属性的名称，其中包含由上一个请求保存的“输入”闪存属性（如果有）。
+>
+> OUTPUT_FLASH_MAP_ATTRIBUTE
+>
+> Name of request attribute that holds the "output" FlashMap with attributes to save for a subsequent request.   保存“输出”flashmap的请求属性的名称，其中包含为后续请求保存的属性。
+
+以上两个属性可以直接通过 `RequestContextUtils#getInputFlashMap(HttpServletRequest)` 和 `RequestContextUtils#getOutputFlashMap(HttpServletRequest)` 获得。
+
+
+
+```java
+@Controller
+public class MyCommonController {
+    @RequestMapping(value = "/submit", method = RequestMethod.POST)
+    public String submit(RedirectAttributes attr) {
+        RequestAttributes reqAttributes = RequestContextHolder.getRequestAttributes();
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) reqAttributes;
+        HttpServletRequest request = requestAttributes.getRequest();
+        Object attribute = request.getAttribute(DispatcherServlet.OUTPUT_FLASH_MAP_ATTRIBUTE);
+        FlashMap flashMap = (FlashMap) attribute;
+
+        flashMap.put("name", "张三丰");
+        attr.addFlashAttribute("ordersId", "xxx");
+        attr.addAttribute("local", "zh-cn");
+        
+        FlashMap outputFlashMap = RequestContextUtils.getOutputFlashMap(request);
+        outputFlashMap.put("age", 130);
+
+        return "redirect:showorders";
+    }
+
+    @RequestMapping(value = "/showorders", method = RequestMethod.GET)
+    public String showOrders(Model model) {
+        // doSomthing ...
+        return "orders";
+    }
+}
+
+```
+
+`INPUT_FLASH_MAP_ATTRIBUTE`和`OUTPUT_FLASH_MAP_ATTRIBUTE`的设置比较麻烦，上面代码只是展示一下操作方式；实际开发中，应该使用`RedirectAttributes`，注意看上面的代码，是传参；
+
+- `addFlashAttribute()`方法是将传入的参数保存到`output-FlashMap`中
+- `addAttribute()`方法是将参数拼接到`url`中。
+- 还可以通过`RequestContextUtils`来操作……
+
+
 
 
 
