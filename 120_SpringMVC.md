@@ -171,6 +171,15 @@ public class ServletRequestHandlerEventListener
 
 第10章， 10.3 `DispatcherServlet`，…… P118 ~ ，
 
+![](./imgs/120_smvc_doDispatch_method.png)
+
+上图，是原班照抄第10章结尾处的图，我是使用`draw.io`绘制的，原稿在 https://github.com/juedui0769/BitDiagram2019/tree/master/springmvc 目录下的 `springmvc_101_DispatcherServlet.xml` 文件中。（以后，遇到比较难理解的调用逻辑时，可以像上图这样绘制出来；看图还是比看代码清晰很多，特别是自己绘制出来的，更觉清晰）
+
+- 说明： `draw.io`导出时，可以设置“缩放”和“边框宽度”，默认是“缩放”为`100%`，“边框宽度”为`0`；经过测试，我将“缩放”调整为`145%`，将“边框宽度”设置为`2`，导出为`png`图片，效果还可以；之前的导出是`63KB`，现在的导出为`99KB`。
+- 
+
+#### 第11章
+
 
 
 
