@@ -180,6 +180,104 @@ public class ServletRequestHandlerEventListener
 
 #### 第11章
 
+##### HandlerMapping
+
+![](./imgs/120_smvc_HandlerMapping_01.png)
+
+##### HandlerAdapter
+
+![](./imgs/120_smvc_HandlerAdapter_01.png)
+
+##### HandlerExceptionResolver
+
+![](./imgs/120_smvc_HandlerExceptionResolver_01.png)
+
+- 如开发内网系统，可以在错误页面显示一些细节，这样方便调试；
+- 但如果是互联网系统，最好不要将异常的太多细节显示给用户，这样很容易被黑客利用。
+
+##### ViewResolver
+
+![](./imgs/120_smvc_ViewResolver_01.png)
+
+##### RequestToViewNameTranslator
+
+![](./imgs/120_smvc_RequestToViewNameTranslator_01.png)
+
+`RequestToViewNameTranslator`在 Spring MVC 容器里只能配置一个，所有 request 到 ViewName 的转换规则都要在一个 Translator 中实现。
+
+##### LocaleResolver
+
+![](./imgs/120_smvc_LocaleResolver_01.png)
+
+```xml
+<mvc:interceptors>
+	<mvc:interceptor>
+		<mvc:mapping path="/*"/>
+		<bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor" />
+	</mvc:interceptor>
+</mvc:interceptors>
+```
+
+如上，这样就可以通过`http://localhost:8080?locale=zh_CN`，`http://localhost:8080?locale=en`来设置了 Locale 了；也可以向下面这样把`locale`替换为`lang`。
+
+```xml
+<mvc:interceptors>
+	<mvc:interceptor>
+		<mvc:mapping path="/*"/>
+		<bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+			<property name="paramName" value="lang"/>
+		</bean>
+	</mvc:interceptor>
+</mvc:interceptors>
+```
+
+##### ThemeResolver
+
+![](./imgs/120_smvc_ThemeResolver_01.png)
+
+Spring MVC 的主题也支持国际化，同一个主题不同的区域也可以显示不同的风格。
+
+```java
+// org.springframework.web.servlet.support.RequestContext
+
+public String getThemeMessage(String code, Object[] args, String defaultMessage) {
+	return getTheme().getMessageSource().getMessage(code, args, defaultMessage, this.locale);
+}
+
+public Theme getTheme() {
+	if (this.theme == null) {
+		// Lazily determine theme to use for this RequestContext.
+		this.theme = RequestContextUtils.getTheme(this.request);
+		if (this.theme == null) {
+			// No ThemeResolver and ThemeSource available -> try fallback.
+			this.theme = getFallbackTheme();
+		}
+	}
+	return this.theme;
+}
+```
+
+Spring MVC 中主题的切换和 Locale 的切换使用相同的模式，也是使用 Interceptor。（`ThemeChangeInterceptor`）
+
+##### MultipartResolver
+
+![](./imgs/120_smvc_MultipartResolver.png)
+
+如果上传请求不用`MultipartHttpServletRequest`，直接用原来的`request`也是可以的。
+
+##### FlashMapManager
+
+![](./imgs/120_smvc_FlashMapManager_01.png)
+
+`redirect`的参数通过 `FlashMap` 传递的过程分三步：
+
+- （1）在处理器中将需要传递的参数设置到 `outputFlashMap`中
+  - 可以先拿到 `outputFlashMap`，然后将参数`put`进去
+  - 也可以将需要传递的参数设置到处理器的 `RedirectAttributes`类型的参数中，当处理器处理完请求时，如果是`redirect`类型的返回值`RequestMappingHandlerAdapter`会将其设置到`outputFlashMap`中。
+- （2）在`RedirectView`的`renderMergedOutputModel`方法中调用`FlashMapManageer`的`saveOutputFlashMap`方法，将`outputFlashMap`中的参数设置到`Session`中。
+- （3）请求`redirect`后`DispatcherServlet`的`doService`会调用`FlashMapManager`的`retrieveAndUpdate`方法从 Session 中获取 `inputFlashMap` 并设置到 Request 的属性中备用，同时从 Session 中删除。
+
+
 
 
 
