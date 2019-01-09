@@ -272,10 +272,26 @@ Spring MVC 中主题的切换和 Locale 的切换使用相同的模式，也是�
 `redirect`的参数通过 `FlashMap` 传递的过程分三步：
 
 - （1）在处理器中将需要传递的参数设置到 `outputFlashMap`中
-  - 可以先拿到 `outputFlashMap`，然后将参数`put`进去
+  - 可以先拿到 `outputFlashMap`，然后将参数`put`进去（获取`outputFlashMap`的方式： 通过`request`获取`DispatcherServelet.OUTPUT_FLASH_MAP_ATTRIBUTE`）
   - 也可以将需要传递的参数设置到处理器的 `RedirectAttributes`类型的参数中，当处理器处理完请求时，如果是`redirect`类型的返回值`RequestMappingHandlerAdapter`会将其设置到`outputFlashMap`中。
 - （2）在`RedirectView`的`renderMergedOutputModel`方法中调用`FlashMapManageer`的`saveOutputFlashMap`方法，将`outputFlashMap`中的参数设置到`Session`中。
 - （3）请求`redirect`后`DispatcherServlet`的`doService`会调用`FlashMapManager`的`retrieveAndUpdate`方法从 Session 中获取 `inputFlashMap` 并设置到 Request 的属性中备用，同时从 Session 中删除。
+
+#### 第12章
+
+![](./imgs/120_smvc_HandlerMapping_02.png)
+
+上图是`HandlerMapping`的家谱。
+
+
+
+
+
+
+
+
+
+
 
 
 
