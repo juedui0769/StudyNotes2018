@@ -279,17 +279,28 @@ Spring MVC 中主题的切换和 Locale 的切换使用相同的模式，也是�
 
 #### 第12章
 
+##### 家谱
+
 ![](./imgs/120_smvc_HandlerMapping_02.png)
 
 上图是`HandlerMapping`的家谱。
 
+##### ApplicationContext
 
+![](./imgs/120_smvc_ApplicationContext.png)
 
+如上图，`ApplicationContext`继承了 6 个接口：
 
+- EnvironmentCapable
+- MessageSource
+- ApplicationEventPublisher
+- HierarchicalBeanFactory
+- ResourcePatternResolver
+- ListableBeanFactory
 
+其中，`BeanFactory`和`ResourceLoader`是间接继承。`ApplicationContext`自身的方法如下：
 
-
-
+![](./imgs/120_smvc_ApplicationContext_02.png)
 
 
 
@@ -468,15 +479,25 @@ public class MyCommonController {
 
 
 
+## Book02
+
+《Spring 源码深度解析》，郝佳 编著，人民邮电出版社，2013年9月第1版，20161029购于京东。
+
+### XmlBeanFactory
+
+![](./imgs/120_spring_XmlBeanFactory.png)
+
+`XmlBeanFactory`，已经被废弃了。
+
+> @deprecated as of Spring 3.1 in favor of {@link DefaultListableBeanFactory} and {@link XmlBeanDefinitionReader}
+
+`DefaultListableBeanFactory`， `XmlBeanDefinitionReader` ： `DefaultListableBeanFactory`如上图，就是`XmlBeanFactory`的父类；`XmlBeanDefinitionReader`如下图。
 
 
 
+### XmlBeanDefinitionReader
 
-
-
-
-
-
+![](./imgs/120_spring_XmlBeanDefinitionReader.png)
 
 
 
