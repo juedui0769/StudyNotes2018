@@ -89,6 +89,19 @@ pip install ipython
 
 那 PyCharm 可以为每个工程指定不同版本的python，不同于 Java 的 Compiler ，python 对应的是 Intercepter，在 Settings 下可以找到 Project Intercepter，在这里设置python解释器。
 
+## 05 Python Shell 清屏命令
+
+```python
+import os
+n = os.system('cls')
+```
+
+https://blog.csdn.net/howard2005/article/details/79879289， https://blog.csdn.net/cxcxrs/article/details/81219395 ， 参考上面的博文。
+
+## 06 pythontutor
+
+http://www.pythontutor.com/
+
 
 
 
@@ -509,6 +522,383 @@ if __name__ == '__main__':
 - `_asdict()` 把具名元组以 `collecitons.OrderedDict` 的形式返回，我们可以利用它来把元组里的信息友好地呈现出来。
 
 #### 2.3.5 作为不可变列表的元组
+
+|                            | 列表 | 元组 |                                                              |
+| -------------------------- | ---- | ---- | ------------------------------------------------------------ |
+| `s.__add__(s2)`            | ✔    | ✔    | s + s2，拼接                                                 |
+| `s.__iadd__(s2)`           | ✔    |      | s += s2，就地拼接                                            |
+| `s.append(e)`              | ✔    |      | 在尾部添加一个新元素                                         |
+| `s.clear()`                | ✔    |      | 删除所有元素                                                 |
+| `s.__contains__(e)`        | ✔    | ✔    | s 是否包含 e                                                 |
+| `s.copy()`                 | ✔    |      | 列表的浅复制                                                 |
+| `s.count(e)`               | ✔    | ✔    | e 在 s 中出现的次数                                          |
+| `s.__delitem__(p)`         | ✔    |      | 把位于 p 的元素删除                                          |
+| `s.extend(it)`             | ✔    |      | 把可迭代对象 it 追加给 s                                     |
+| `s.__getitem__(p)`         | ✔    | ✔    | s[p]，获取位置 p 的元素                                      |
+| `s.__getnewargs__()`       | ✔    | ✔    | 在 pickle 中支持更加优化的序列化                             |
+| `s.index(e)`               | ✔    | ✔    | 在 s 中找到元素 e 第一次出现的位置                           |
+| `s.insert(p, e)`           | ✔    |      | 在位置 p 之前插入元素 e                                      |
+| `s.__iter__()`             | ✔    | ✔    | 获取 s 的迭代器                                              |
+| `s.__len__()`              | ✔    | ✔    | len(s)，元素的数量                                           |
+| `s.__mul__(n)`             | ✔    | ✔    | s * n，n 个 s 的重复拼接                                     |
+| `s.__imul__(n)`            | ✔    |      | s *= n，就地重复拼接                                         |
+| `s.__rmul__(n)`            | ✔    | ✔    | n * s，反向拼接                                              |
+| `s.pop([p])`               | ✔    |      | 删除最后或者是（可选的）位于 p 的元素， 并返回它的值         |
+| `s.remove(e)`              | ✔    |      | 删除 s 中的第一次出现的 e                                    |
+| `s.reverse()`              | ✔    |      | 就地把 s 的元素倒序排列                                      |
+| `s.__reversed__()`         | ✔    |      | 返回 s 的倒序迭代器                                          |
+| `s.__setitem__(p, e)`      | ✔    |      | s[p] = e，把元素 e 放在位置 p，替代已经在那个位置的元素      |
+| `s.sort([key], [reverse])` | ✔    |      | 就地对 s 中的元素进行排序，可选的参数有键（key）和是否倒序（reverse） |
+
+除了跟增减元素相关的方法之外，元组支持列表的其他所有方法。
+
+#### 2.4 切片
+
+在 Python 里，像列表（list）、元组（tuple）和字符串（str）这类序列类型都支持切片操作
+
+#### 2.4.1 为什么切片和区间会忽略最后一个元素
+
+在切片和区间操作里不包含区间范围的最后一个元素是 Python 的风格，这个习惯符合 Python、C和其他语言里以 `0` 作为起始下标的传统。这样做带来的好处如下：
+
+1. 当只有最后一个位置信息时，我们也可以快速看出切片和区间里有几个元素： `range(3)` 和 `my_list[:3]` 都返回 `3` 个元素。
+
+2. 当起止位置信息都可见时，我们可以快速计算出切片和区间的长度，用后一个数减去第一个下标（`stop -start`）即可。
+
+3. 这样做也让我们可以利用任意一个下标来把序列分割成不重叠的两部分，只要写成 `my_list[:x]` 和 `my_list[x:]` 就可以了，如下所示。
+
+```python
+>>> l = [10, 20, 30, 40, 50, 60]
+>>> l[:2]
+[10, 20]
+>>> l[2:]
+[30, 40, 50, 60]
+```
+
+#### 2.4.2 对对象进行切片
+
+我们可以用 `s[a:b:c]` 的形式对 s 在 a 和 b 之间以 c 为间隔取值。c 的值还可以为负，负值意味着反向取值。
+
+```python
+>>> s = 'bicycle'
+>>> s[::3]
+'bye'
+>>> s[::-1]
+'elcycib'
+>>> s[::-2]
+'eccb'
+```
+
+#### 2.4.3 多维切片和省略
+
+`[]` 运算符里还可以使用以逗号分开的多个索引或者是切片，外部库 `NumPy` 里就用到了这个特性，二维的 `numpy.ndarray` 就可以用 `a[i, j]` 这种形式来获取，抑或是用 `a[m:n, k:l]` 的方式来得到二维切片。
+
+> 省略（ellipsis）的正确书写方法是三个英语句号（`...`）
+>
+> 这节没细讲
+
+2.4.3 节，可以直接略过，没什么用，特别是初期时……
+
+#### 2.4.4 给切片赋值
+
+```python
+>>> l = list(range(10))
+>>> l
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+>>> l[2:5] = [20, 30]
+>>> l
+[0, 1, 20, 30, 5, 6, 7, 8, 9]
+>>> del l[5:7]
+>>> l
+[0, 1, 20, 30, 5, 8, 9]
+>>> l[3::2] = [11, 22]
+>>> l
+[0, 1, 20, 11, 5, 22, 9]
+>>> l[2:5] = 100
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: can only assign an iterable
+>>> l[2:5] = [100]
+>>> l
+[0, 1, 100, 22, 9]
+```
+
+`l[2:5] = 100` ，这句报错，赋值语句的右侧必须是个可迭代对象，`l[2:5] = [100]`
+
+上面代码，就是切片的赋值操作，`del l[5:7]` 是删除……
+
+#### 2.5 对序列使用`+`和`*`
+
+```python
+>>> l = [1, 2, 3]
+>>> l * 5
+[1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]
+>>> 5 * 'abcd'
+'abcdabcdabcdabcdabcd'
+```
+
+如果想要把一个序列复制几份然后再拼接起来，更快捷的做法是把这个序列乘以一个整数。同样，这个操作会产生一个新序列。
+
+`+` 和 `*` 都遵循这个规律，不修改原有的操作对象，而是构建一个全新的序列。
+
+#### 建立由列表组成的列表
+
+```python
+>>> board = [['_'] * 3 for i in range(3)]
+>>> board
+[['_', '_', '_'], ['_', '_', '_'], ['_', '_', '_']]
+>>> board[1][2] = 'X'
+>>> board
+[['_', '_', '_'], ['_', '_', 'X'], ['_', '_', '_']]
+```
+
+以下代码演示错误的做法：
+
+```python
+>>> weird_board = [['_'] * 3] * 3
+>>> weird_board
+[['_', '_', '_'], ['_', '_', '_'], ['_', '_', '_']]
+>>> weird_board[1][2] = '0'
+>>> weird_board
+[['_', '_', '0'], ['_', '_', '0'], ['_', '_', '0']]
+```
+
+#### 2.6 序列的增量赋值
+
+```python
+>>> l = [1, 2, 3]
+>>> id(l)
+39467848
+>>> l *= 2
+>>> id(l)
+39467848
+>>> l
+[1, 2, 3, 1, 2, 3]
+>>> t = (1, 2, 3)
+>>> id(t)
+35889944
+>>> t
+(1, 2, 3)
+>>> t *= 2
+>>> t
+(1, 2, 3, 1, 2, 3)
+>>> id(t)
+30530728
+```
+
+对不可变序列进行重复拼接操作的话，效率会很低，因为每次都有一个新对象，而解释器需要把原来对象中的元素先复制到新的对象里，然后再追加新的元素。
+
+#### 2.7 list.sort方法和内置函数sorted
+
+`list.sort` 方法会就地排序列表，也就是说不会把原列表复制一份。这也就是这个方法的返回值是 `None` 的原因，提醒你本方法不会新建一个列表。
+
+> 在这种情况下返回 `None` 其实是 Python 的一个惯例： 如果一个函数或者方法对对象进行的是就地改动，那它就应该返回 `None`，好让调用者知道传入的参数发生了变动，而且并未产生新的对象。
+
+与 `list.sort` 相反的是内置函数 `sorted`，它会新建一个列表作为返回值。这个方法可以接受任何形式的可迭代对象作为参数，甚至包括不可变序列或生成器。而不管 `sorted` 接受的是怎样的参数，它最后都会返回一个列表。
+
+不管是 `list.sort` 方法还是 `sorted` 函数，都有两个可选的关键字参数。
+
+- `reverse` ：如果被设定为 `True`，被排序的序列里的元素会以降序输出（也就是说把最大值当作最小值来排序）。这个参数的默认值是 `False`。
+- `key` ： 一个只有一个参数的函数，这个函数会被用在序列里的每一个元素上，所产生的结果将是排序算法依赖的对比关键字。这个参数的默认值是恒等函数（identity function），也就是默认用元素自己的值来排序。
+  - 比如说，在对一些字符串排序时，可以用 `key=str.lower` 来实现忽略大小写的排序，
+  - 或者是用 `key=len` 进行基于字符串长度的排序。
+
+> 可选参数 `key` 还可以在内置函数 `min()` 和 `max()` 中起作用。
+>
+> 另外，还有些标准库里的函数也接受这个参数，像 `itertools.groupby()` 和 `heapq.nlargest()` 等。
+
+```python
+>>> fruits = ['grape', 'raspberry', 'apple', 'banana']
+>>> fruits
+['grape', 'raspberry', 'apple', 'banana']
+>>> sorted(fruits)
+['apple', 'banana', 'grape', 'raspberry']
+>>> fruits
+['grape', 'raspberry', 'apple', 'banana']
+>>> sorted(fruits, reverse=True)
+['raspberry', 'grape', 'banana', 'apple']
+>>> sorted(fruits, key=len)
+['grape', 'apple', 'banana', 'raspberry']
+>>> sorted(fruits, key=len, reverse=True)
+['raspberry', 'banana', 'grape', 'apple']
+>>> fruits
+['grape', 'raspberry', 'apple', 'banana']
+>>> fruits.sort()
+>>> fruits
+['apple', 'banana', 'grape', 'raspberry']
+```
+
+#### 2.8 用bisect来管理已排序的序列
+
+> 书上提到的链接 https://code.activestate.com/recipes/577197-sortedcollection/ ，国内访问不了。
+
+https://docs.python.org/3/library/bisect.html， Python 官方文档
+
+```python
+import bisect
+import sys
+
+HAYSTACK = [1, 4, 5, 6, 8, 12, 15, 20, 21, 23, 23, 26, 29, 30]
+NEEDLES = [0, 1, 2, 5, 8, 10, 22, 23, 29, 30, 31]
+
+ROW_FMT = '{0:2d} @ {1:2d}    {2}{0:<2d}'
+
+def demo(bisect_fn):
+    for needle in reversed(NEEDLES):
+        position = bisect_fn(HAYSTACK, needle)  #1
+        offset = position * '  |'  #2
+        print(ROW_FMT.format(needle, position, offset)) #3
+
+if __name__ == '__main__':
+    if sys.argv[-1] == 'left':  #4
+        bisect_fn = bisect.bisect_left
+    else:
+        bisect_fn = bisect.bisect
+
+    print('DEMO:', bisect_fn.__name__)  #5
+    print('haystack ->', ' '.join('%2d' % n for n in HAYSTACK))
+    demo(bisect_fn)
+```
+
+```python
+import bisect
+
+def grade(score, breakpoints=[60, 70, 80, 90], grades='FDCBA'):
+    i = bisect.bisect(breakpoints, score)
+    return grades[i]
+
+if __name__ == '__main__':
+    a = [grade(score) for score in [33, 99, 77, 70, 89, 90, 100]]
+    print(a)
+```
+
+
+
+这一节，没看懂，要多复习揣摩一下！
+
+#### 2.8.2 用bisect.insort插入新元素
+
+排序很耗时，因此在得到一个有序序列之后，我们最好能够保持它的有序。`bisect.insort` 就是为了这个而存在的。
+
+`insort(seq, item)` 把变量 `item` 插入到序列 `seq` 中，并能保持 `seq` 的升序顺序。
+
+```python
+import bisect
+import random
+
+SIZE = 7
+
+random.seed(1729)
+
+if __name__ == '__main__':
+    my_list = []
+    for i in range(SIZE):
+        new_item = random.randrange(SIZE * 2)
+        bisect.insort(my_list, new_item)
+        print('%2d ->' % new_item, my_list)
+```
+
+#### 2.9.1 数组
+
+如果我们需要一个只包含数字的列表，那么 `array.array` 比 `list` 更高效。
+
+```python
+from array import array     #1
+from random import random
+
+if __name__ == '__main__':
+    floats = array('d', (random() for i in range(10**7)))      #2
+    print(floats[-1])   #3
+    fp = open('floats.bin', 'wb')
+    floats.tofile(fp)   #4
+    fp.close()
+    floats2 = array('d')    #5
+    fp = open('floats.bin', 'rb')
+    floats2.fromfile(fp, 10**7)     #6
+    fp.close()
+    print(floats2[-1])  #7
+    print(floats2 == floats)    #8
+```
+
+生成的 `floats.bin` 文件有76.2MB，注意将其添加到`.gitignore`中。
+
+> 另外一个快速序列化数字类型的方法是使用 `pickle` （https://docs.python.org/3/library/pickle.html）模块。
+
+|                           | 列表 | 数组 |                                                              |
+| ------------------------- | ---- | ---- | ------------------------------------------------------------ |
+| `s.__add__(s2)`           | ✔    | ✔    | s + s2，拼接                                                 |
+| `s.__iadd__(s2)`          | ✔    | ✔    | s += s2，就地拼接                                            |
+| `s.append(e)`             | ✔    | ✔    | 在尾部添加一个元素                                           |
+| `s.byteswap`              |      | ✔    | 翻转数组内每个元素的字节序列，转换字节序                     |
+| `s.clear()`               | ✔    |      | 删除所有元素                                                 |
+| `s.__contains__(e)`       | ✔    | ✔    | s 是否包含 e                                                 |
+| `s.copy()`                | ✔    |      | 对列表浅复制                                                 |
+| `s.__copy__()`            |      | ✔    | 对 `copy.copy` 的支持                                        |
+| `s.count(e)`              | ✔    | ✔    | s 中 e 出现的次数                                            |
+| `s.__deepcopy__()`        |      | ✔    | 对 copy.deepcopy 的支持                                      |
+| `s.__delitem__(p)`        | ✔    | ✔    | 删除位置 p 的元素                                            |
+| `s.extend(it)`            | ✔    | ✔    | 将可迭代对象 it 里的元素添加到尾部                           |
+| `s.frombytes(b)`          |      | ✔    | 将压缩成机器值的字节序列读出来添加到尾部                     |
+| `s.fromfile(f, n)`        |      | ✔    | 将二进制文件 f 内，含有机器值读出来添加到尾部，最多添加 n 项 |
+| `s.fromlist(l)`           |      | ✔    | 将列表里的元素添加到尾部，如果其中任何一个元素导致了 TypeError 异常，那么所有的添加都会取消 |
+| `s.__getitem__(p)`        | ✔    | ✔    | s[p]，读取位置 p 的元素                                      |
+| `s.index(e)`              | ✔    | ✔    | 找到 e 在序列中第一次出现的位置                              |
+| `s.insert(p, e)`          | ✔    | ✔    | 在位于 p 的元素之前插入元素 e                                |
+| `s.itemsize`              |      | ✔    | 数组中每个元素的长度是几个字节                               |
+| `s.__iter__()`            | ✔    | ✔    | 返回迭代器                                                   |
+| `s.__len__()`             | ✔    | ✔    | len(s)，序列的长度                                           |
+| `s.__mul__(n)`            | ✔    | ✔    | s * n，重复拼接                                              |
+| `s.__imul__(n)`           | ✔    | ✔    | s *= n，就地重复拼接                                         |
+| `s.__rmul__(n)`           | ✔    | ✔    | n * s ，反向重复拼接                                         |
+| `s.pop([p])`              | ✔    | ✔    | 删除位于 p 的值并返回这个值，p 的默认值是最后一个元素的位置  |
+| `s.remove(e)`             | ✔    | ✔    | 删除序列里第一次出现的 e 元素                                |
+| `s.reverse()`             | ✔    | ✔    | 就地调转序列中元素的位置                                     |
+| `s.__reversed__()`        | ✔    |      | 返回一个从尾部开始扫描元素的迭代器                           |
+| `s.__setitem__(p, e)`     | ✔    | ✔    | s[p] = e，把位于 p 位置的元素替换成 e                        |
+| `s.sort([key], [revers])` | ✔    |      | 就地排序序列，可选参数有 key 和 reverse                      |
+| `s.tobytes()`             |      | ✔    | 把所有元素的机器值用 bytes 对象的形式返回                    |
+| `s.tofile(f)`             |      | ✔    | 把所有元素以机器值的形式写入一个文件                         |
+| `s.tolist()`              |      | ✔    | 把数组转换成列表，列表里的元素类型是数字对象                 |
+| `s.typecode`              |      | ✔    | 返回只有一个字符的字符串，代表数组元素在 C 语言中的类型      |
+
+> 从 Python 3.4 开始，数组类型不再支持诸如 `list.sort()` 这种就地排序方法。
+>
+> 要给数组排序的话，得用 sorted 函数新建一个数组：
+>
+> `a = array.array(a.typecode, sorted(a))`
+>
+> 想要在不打乱次序的情况下为数组添加新的元素，`bisect.insort` 能排上用场。
+
+#### 2.9.2 内存视图
+
+`memoryview` 是一个内置类，它能让用户在不复制内容的情况下操作同一个数组的不同切片。
+
+> 内存视图其实是泛化和去数学化的 NumPy 数组。它让你在不需要复制内容的前提下，在数据结构之间共享内存。其中数据结构可以是任何形式，比如 PIL 图片、SQLite数据库和 NumPy 的数组，等等。这个功能在处理大型数据集合的时候非常重要。
+
+#### 2.9.3 NumPy和SciPy
+
+凭借着 NumPy 和 SciPy 提供的高阶数组和矩阵操作，Python 称为科学计算应用的主流语言。
+
+NumPy 实现了多维同质数组（homogeneous array）和矩阵，这些数据结构不但能处理数字，还能存放其他由用户定义的记录。通过 NumPy，用户能对这些数据结构里的元素进行高效的操作。
+
+SciPy 是基于 NumPy 的另一个库，它提供了很多跟科学计算有关的算法，专为线性代数、数值积分和统计学而设计。SciPy 把基于 C 和 Fortran 的工业级数学计算功能用交互式且高度抽象的 Python 包装起来，让科学家如鱼得水。
+
+
+
+用到时再专门学习学习
+
+#### 2.9.4 双向队列和其他形式的队列
+
+`collections.deque`类（双向队列）是一个线程安全、可以快速从两端添加或者删除元素的数据类型。
+
+
+
+
+
+
+
+
+
+
 
 
 
