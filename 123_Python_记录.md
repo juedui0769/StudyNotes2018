@@ -2616,29 +2616,232 @@ promos = [func for name, func in
 
 
 
+#### 6.2  命令模式
+
+命令模式的目的是解耦调用操作的对象（调用者）和提供实现的对象（接收者）。
+
+在《设计模式：可复用面向对象软件的基础》所举的示例中，调用者时图形应用程序中的菜单项，而接收者是被编辑的文档或应用程序自身。
+
+这个模式的做法是，在二者之间放一个 Command 对象，让它实现只有一个方法（execute）的接口，调用接收者中的方法执行所需的操作。这样调用者无需了解接收者的接口，而且不同的接收者可以适应不同 Command 子类。调用者有一个具体的命令，通过调用 execute 方法执行。
+
+Gamma 等人说过： “命令模式是回调机制的面向对象替代品”
+
+我们可以不为调用者提供一个 Command 实例，而是给它一个函数。此时，调用者不用调用 `command.execute()` ，直接调用 `command()` 即可。
+
+```python
+class MacroCommand:
+    """一个执行一组命令的命令"""
+    def __init__(self, commands):
+        self.commands = list(commands)
+
+    def __call__(self):
+        for command in self.commands:
+            command()
+```
+
+把实现单方法接口的类的实例替换成可调用对象。
+
+毕竟，每个 Python 可调用对象都实现了单方法接口，这个方法就是 `__call__` 。
+
+#### 6.3  本章小结
+
+很多情况下，在 Python 中使用函数或可调用对象实现回调更自然。
+
+#### 6.4  延伸阅读
+
+《设计模式：可复用面向对象软件的基础》中的两个设计原则：
+
+- 对接口编程，而不是对实现编程
+- 优先使用对象组合，而不是类继承
+
+### 第7章
+
+**函数装饰器和闭包**
+
+> 有很多人抱怨，把这个特性命名为 “装饰器” 不好。主要原因是，这个名词与 GoF书 使用的不一致。**装饰器**这个名称可能更适合在编译器领域使用，因为它会遍历并注解句法树。
+>
+> ​				—— PEP 318  Decorators for Functions and Methods
+
+函数装饰器用于在源码中 “标记” 函数，以某种方式增强函数的行为。这是一项强大的功能，但是若想掌握，必须理解闭包。
+
+除了在装饰器中有用处之外，**闭包**还是回调式异步编程和函数式编程风格的基础。
+
+#### 7.1  装饰器基础知识
+
+装饰器是可调用的对象，其参数是另一个函数（被装饰的函数）。装饰器可能会处理被装饰的函数，然后把它返回，或者将其替换成另一个函数或可调用对象。
+
+```python
+>>> def deco(func):
+...     def inner():
+...             print('running inner()')
+...     return inner
+...
+>>> @deco
+... def target():
+...     print('running target()')
+...
+>>> target()
+running inner()
+>>> target
+<function deco.<locals>.inner at 0x000000000258D620>
+```
+
+严格说来，装饰器只是语法糖。如前所示，装饰器可以像常规的可调用对象那样调用，其参数是另一个函数。有时，这样做更方便，尤其是做*元编程*（在运行时改变程序的行为）时。
+
+综上，装饰器的特性是：
+
+- 能把被装饰的函数替换成其他函数；
+- 装饰器在加载模块时立即执行。
+
+#### 7.2  Python何时执行装饰器
+
+装饰器的一个关键特性是，它们在被装饰的函数定义之后立即执行。这通常是在*导入时*（即 Python 加载模块时）
+
+```python
+# registration.py
+registry = []
+
+def register(func):
+    print('running register(%s)' % func)
+    registry.append(func)
+    return func
+
+@register
+def f1():
+    print('running f1()')
+
+@register
+def f2():
+    print('running f2()')
+
+def f3():
+    print('running f3()')
+
+def main():
+    print('running main()')
+    print('registry ->', registry)
+    f1()
+    f2()
+    f3()
+
+if __name__ == '__main__':
+    main()
+
+
+```
 
 
 
+```python
+>>> import sys
+>>> sys.path.append('F:\\wxg103\\pythonProjects\\FluentPython\\ch07')
+>>> import registration
+running register(<function f1 at 0x000000000258D840>)
+running register(<function f2 at 0x000000000258D8C8>)
+>>>
+>>> registration.registry
+[<function f1 at 0x000000000258D840>, <function f2 at 0x000000000258D8C8>]
+```
 
 
 
+以上示例，主要想强调，函数装饰器在导入模块时立即执行，而被装饰的函数只在明确调用时运行。这突出了 Python 程序员所说的*导入时* 和*运行时*之间的区别。
+
+- 上例，装饰器函数与被装饰的函数在同一个模块中定义。实际情况是，装饰器通常在一个模块中定义，然后应用到其他模块中的函数上。
+- 上例，`register` 装饰器原封不动地返回被装饰的函数。实际上，大多数装饰器会在内部定义一个函数，然后将其返回。
+
+很多 Python Web 框架使用这样的装饰器把函数添加到某处中央注册处，例如把 URL 模式映射到生成 HTTP 响应的函数上的注册处。这种注册装饰器可能会也可能不会修改被装饰的函数。
+
+#### 7.3  使用装饰器改进“策略模式”
+
+在第6章中，`best_promo` 用来判断哪个折扣幅度最大的 `promos` 列表中也有函数名称，这种重复是个问题，因为新增策略函数后，可能会忘记把它添加到 `promos` 列表中，导致 `best_promo` 忽略新策略，而且不报错，为系统引入了不易觉察的缺陷。
+
+```python
+promos = []
+
+def promotion(promo_func):
+    promos.append(promo_func)
+    return promo_func
+
+@promotion
+def fidelity(order):
+    """为积分 1000或以上 的顾客提供 5% 折扣"""
+    return order.total() * .05 if order.customer.fidelity >= 1000 else 0
+
+@promotion
+def bulk_item(order):
+    """单个商品为 20 个或以上时提供 10% 折扣"""
+    discount = 0
+    for item in order.cart:
+        if item.quantity >= 20:
+            discount += item.total() * .1
+    return discount
+
+@promotion
+def large_order(order):
+    """订单中的不同商品达到 10 个或以上时提供 7% 折扣"""
+    distinct_items = {item.product for item in order.cart}
+    if len(distinct_items) >= 10:
+        return order.total() * .07
+    return 0
+
+def best_promo(order):
+    """选择可用的最佳折扣"""
+    return max(promo(order) for promo in promos)
+```
+
+与第6章给出的方案相比，这个方案有几个优点：
+
+- 促销策略函数无需使用特殊的名称（即不用以 `_promo` 结尾）；
+- `@promotion` 装饰器突出了，被装饰的函数的作用，还便于临时禁用某个促销策略： 只需把装饰器注释掉。
+- 促销折扣策略可以在其他模块中定义，在系统中的任何地方都行，只要使用 `@promotion` 装饰即可。
+
+#### 7.4  变量作用域规则
+
+```python
+>>> def f1(a):
+...     print(a)
+...     print(b)
+...
+>>> f1(3)
+3
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "<stdin>", line 3, in f1
+NameError: name 'b' is not defined
+>>>
+>>> b = 6
+>>> f1(3)
+3
+6
+```
 
 
 
+```python
+>>> b = 6
+>>> def f2(a):
+...     print(a)
+...     print(b)
+...     b = 9
+...
+>>> f2(3)
+3
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "<stdin>", line 3, in f2
+UnboundLocalError: local variable 'b' referenced before assignment
+```
 
+这不是缺陷，而是设计选择： Python 不要求声明变量，但是假定在函数定义体中赋值的变量是局部变量。这比 JavaScript 的行为好多了，JS 也不要求声明变量，但是会在不知情的情况下获取全局变量。
 
+如果在函数中赋值时想让解释器把 `b` 当成全局变量，要使用 `global` 声明
 
+#### 7.5  闭包
 
+在博客圈，人们有时会把闭包和匿名函数弄混。
 
-
-
-
-
-
-
-
-
-
+其实，闭包指延伸了作用域的函数，其中包含函数定义体中引用，但是不在定义体中定义的非全局变量。函数是不是匿名的没有关系，关键是它能访问定义体之外定义的非全局变量。
 
 
 
