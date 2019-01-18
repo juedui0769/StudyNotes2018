@@ -102,7 +102,61 @@ https://blog.csdn.net/howard2005/article/details/79879289， https://blog.csdn.n
 
 http://www.pythontutor.com/
 
+## 07 导入py文件到命令行
 
+在 PyCharm 中编写 Python 的代码文件，如何导入到 Python命令行中使用呢？
+
+比如，我编写的py文件保存的位置为：“F:\wxg103\pythonProjects\FluentPython\ch06\example6_1.py” （这是一个很长的目录，但是 PyCharm 中可以使用 “copy path” 快速得到），如何导入到命令行呢？
+
+参考： https://blog.csdn.net/Mr_Cat123/article/details/80515370 ， https://blog.csdn.net/benjamin721/article/details/77235602 
+
+```python
+import os, sys
+
+n = os.system('cls')  # 清屏
+
+sys.path.append('F:\\wxg103\\pythonProjects\\FluentPython\\ch06')
+import example6_1
+# or
+from example6_1 import *
+```
+
+按照上面的方式操作，然后，就可以在命令行中使用了。
+
+
+
+## 08  重新加载模块
+
+安装，07 中介绍的方法，导入模块，之后，如果修改了文件，如何重新加载模块呢？
+
+比如修改了 example6_1.py 文件，如何重新加载呢？
+
+参考： https://python3-cookbook.readthedocs.io/zh_CN/latest/c10/p06_reloading_modules.html
+
+```python
+import example6_1
+import imp
+
+imp.reload(example6_1)
+
+from example6_1 import *
+```
+
+承接 07 的操作……
+
+
+
+
+
+
+
+
+
+## Books
+
+### python3-cookbook
+
+https://python3-cookbook.readthedocs.io/zh_CN/latest/index.html
 
 
 
@@ -1504,6 +1558,1089 @@ Python 2.7 带来了集合推导（setcomps）和之前在 3.2 节里讲到过�
 #### 3.9.2   字典中的散列表
 
 散列表其实是一个稀疏数组（总是有空白元素的数组称为稀疏数组）。
+
+如果要把一个对象放入散列表，那么首先要计算这个元素键的散列值。Python 中可以用 `hash()` 方法来做这件事情。
+
+内置的 `hash()` 方法可以用于所有的内置类型对象。如果是自定义对象调用 `hash()` 的话，实际上运行的是自定义的 `__hash__`。
+
+> Me： 同Java一样，应该尽量用素数来计算散列值
+
+从 Python 3.3 开始，`str`、`bytes` 和 `datetime` 对象的散列值计算过程中多了随机的 “加盐” 这一步。所加盐值是 Python 进程内的一个常量，但是每次启动 Python 解释器都会生成一个不同的盐值。
+
+> 盐值的加入是为了防止 DOS 攻击而采取的一种安全措施。
+
+
+
+![](./imgs/123_Python_hash.png)
+
+图 3-3： 从字典中取值的算法流程图；给定一个键，这个算法要么返回一个值，要么掏出 KeyError 异常
+
+#### 3.9.3  dict的实现及其导致的结果
+
+一个可散列的对象必须满足以下要求：
+
+1. 支持 `hash()` 函数，并且通过 `__hash__()` 方法所得到的散列值是不变的。
+2. 支持通过 `__eq__()` 方法来检测相等性。
+3. 若 `a == b` 为真，则 `hash(a) == hash(b)` 也为真。
+
+> 所有由用户自定义的对象默认都是可散列的，因为它们的散列值由 `id()` 来获取，而且它们都是不相等的。
+>
+> 如果你实现了一个类的 `__eq__` 方法，并且希望它是可散列的，那么它一定要有个恰当的 `__hash__` 方法。
+>
+> 另一方面，如果一个含有自定义的 `__eq__` 依赖的类处于可变的状态，那就不要在这个类中实现 `__hash__` 方法
+
+由于字典使用了散列表，而散列表又必须是稀疏的，这导致它在空间上的效率低下。
+
+如果你需要存放数量巨大的记录，那么放在由 元组 或是 具名元组 构成的列表中会是比较好的选择；最好不要根据 JSON 的风格，用由字典组成的列表来存放这些记录。
+
+用元组取代字典就能节省空间的原因有两个：
+
+- 其一是避免了散列表所耗费的空间，
+- 其二是无需把记录中字段的名字在每个元素里都存一遍。
+
+> Me ： 那Java中的JSON传输，是否也可以改进一下呢？让列表只存值不存属性名，属性名额外存储！
+
+在用户自定义的类型中，`__slots__` 属性可以改变实例属性的存储方式，由 `dict` 变成 `tuple`。
+
+> 空间的优化工作可以等到真正需要的时候再开始计划，因为优化往往是可维护性的对立面。
+
+无论何时往字典里添加新的键，Python 解释器都可能做出为字典扩容的决定。扩容导致的结果就是要新建一个更大的散列表，并把字典里已有的元素添加到新表里。这个过程中可能发生新的散列冲突，导致新散列表中键的次序变化。
+
+如果你在迭代一个字典的所有键的过程中同时对字典进行修改，那么这个循环很有可能会跳过一些键——甚至是跳过那些字典中已经有的键。
+
+由此可知，不要对字典同时进行迭代和修改。
+
+如果想扫描并修改一个字典，最好分成两步来进行： 首先对字典迭代，以得出需要添加的内容，把这些内容放在一个新字典里；迭代结束之后再对原有字典进行更新。
+
+> 在 Python 3 中，`.keys()`、`.items()` 和 `.values()` 方法返回的都是字典视图。
+>
+> 也就是说，这些方法返回的值更像集合，而不是 Python 2 那样返回列表。
+>
+> 视图还有动态的特性，它们可以实时反馈字典的变化。
+
+#### 3.9.4  set的实现以及导致的结果
+
+`set` 和 `frozenset` 的实现也依赖散列表，但在它们的散列表里存放的只有元素的引用。在 `set` 加入到 Python 之前，我们都是把字典加上无意义的值当作集合来用的。
+
+- 集合里的元素必须是可散列的。
+- 集合很消耗内存。
+- 可以很高效地判断元素是否存在于某个集合。
+- 元素的次序取决于被添加到集合里的次序。
+- 往集合里添加元素，可能会改变集合里已有元素的次序。
+
+#### 3.10 本章小结
+
+#### 3.11 延伸阅读
+
+在遇到 Python 之前，我主要使用 Perl、PHP 和 JavaScript 做网站开发。
+
+好用的映射类型的字面量句法可以帮助开发者轻松实现配置和表格相关的开发，也能让我们很方便地为原型开发或测试准备好数据容器。
+
+Java 由于没有这个特性，不得不用复杂且冗长的 XML 来替代。
+
+JSON 被当作 “瘦身版 XML” 。在很多情景下，JSON 都成功取代了 XML。由于拥有紧凑的列表和字典表达，JSON 格式可以完美地用于数据交换。
+
+### 第4章
+
+文本和字节序列
+
+> 人类使用文本，计算机使用字节序列。
+>
+> —— Esther Nam 和 Travis Fischer
+>
+> “Character Encoding and Unicode in Python”
+
+
+
+Python 3 明确区分了人类可读的文本字符串和原始的字节序列。
+
+#### 4.1 字符问题
+
+“字符串” 是个相当简单的概念： 一个字符串时一个字符序列。问题出在 “字符” 的定义上。
+
+在 2015 年，“字符” 的最佳定义是 Unicode 字符。因此，从 Python 3 的 `str` 对象中获取的元素是 Unicode 字符，这相当于从 Python 2 的 `unicode` 对象中获取的元素，而不是从 Python 2 的 `str` 对象中获取的原始字节序列。
+
+Unicode
+
+- 字符的标识，即 码位，是 0 ~ 1 114 111 的数字（十进制），在 Unicode 标准中以 4~6 个十六进制数字表示，加前缀 `U+`
+- 字符的具体表述取决于所用的 编码。编码 是在 码位 和 字节序列 之间转换时使用的算法。
+
+> 把 码位 转换成 字节序列 的过程是 编码；
+>
+> 把 字节序列 转换成 码位 的过程是 解码。
+
+```python
+>>> s = 'café'
+>>> len(s) # 1
+4
+>>> b = s.encode('utf8') # 2
+>>> b
+b'caf\xc3\xa9'
+>>> len(b) #4
+5
+>>> b.decode('utf8') # 5
+'café'
+```
+
+1. `café` 字符串有 4 个 Unicode 字符。
+2. 使用 UTF-8 把 str 对象编码成 bytes 对象。
+3. bytes 字面量以 `b` 开头。
+4. 字节序列 b 有 5 个字节 （在 UTF-8 中，`é` 的码位编码成两个字节）。
+5. 使用 UTF-8 把 bytes 对象解码成 str 对象。
+
+> 如果想帮助自己记住 `.decode()` 和 `.encode()` 的区别，可以把字节序列想成晦涩难懂的机器磁芯转储，把 Unicode 字符串想成 “人类可读” 的文本。
+>
+> 那么，把 字节序列 变成人类可读的文本字符串就是 *解码*，而把字符串变成用于存储或传输的 字节序列 就是 *编码*。
+
+
+
+#### 4.2 字节概要
+
+```python
+>>> cafe = bytes('café', encoding='utf_8')
+>>> cafe
+b'caf\xc3\xa9'
+>>> cafe[0]
+99
+>>> cafe[:1]
+b'c'
+>>> cafe_arr = bytearray(cafe)
+>>> cafe_arr
+bytearray(b'caf\xc3\xa9')
+>>> cafe_arr[-1:]
+bytearray(b'\xa9')
+```
+
+> `my_bytes[0]` 获取的是一个整数，而 `my_bytes[:1]` 返回的是一个长度为 `1` 的 `bytes` 对象。
+>
+> `s[0] == s[:1]` 只对 `str` 这序列类型成立。不过， `str` 类型的这个行为十分罕见。
+>
+> 对其他各个序列类型来说，`s[i]` 返回一个元素，而 `s[i:i+1]` 返回一个相同类型的序列，里面是 `s[i]` 元素。
+
+#### 结构体和内存视图
+
+书中举例，使用 `memeoryview` 和 `struct` 查看一个 GIF 图像的首部
+
+#### 4.3 基本的编解码器
+
+Python 自带了超过 100 中 *编解码器*（codec，encoder/decoder），用于在文本和字节之间相互转换。
+
+每个编解码器都有一个名称，如 `utf_8`，这些名称可以传给 `open()` , `str.encode()`, `bytes.decode()` 等函数的 `encoding` 参数。
+
+#### 4.4  了解编解码问题
+
+`UnicodeError`异常
+
+- `UnicodeEncodeError`
+- `UnicodeDecodeError`
+- `SyntaxError`
+
+```python
+>>> city.encode('utf_16')
+b'\xff\xfeS\x00\xe3\x00o\x00 \x00P\x00a\x00u\x00l\x00o\x00'
+>>> city.encode('iso8859_1')
+b'S\xe3o Paulo'
+>>> city.encode('cp437')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "E:\Python_Env\py3\lib\encodings\cp437.py", line 12, in encode
+    return codecs.charmap_encode(input,errors,encoding_map)
+UnicodeEncodeError: 'charmap' codec can't encode character '\xe3' in position 1: character maps to <undefined>
+>>> city.encode('cp437', errors='ignore')
+b'So Paulo'
+>>> city.encode('cp437', errors='replace')
+b'S?o Paulo'
+>>> city.encode('cp437', errors='xmlcharrefreplace')
+b'S&#227;o Paulo'
+```
+
+- `error='ignore'` ，悄无声息地跳过无法编码的字符；这样做通常很不妥。
+- `errors='replace'` ， 把无法编码的字符替换成 ？ ； 数据损坏了，但是用户知道出了问题。
+- `errors='xmlcharrefreplace'` ， 替换成 XML 实体
+
+> 编解码器的错误处理方式是可扩展的。你可以为 `errors` 参数注册额外的字符串，
+>
+> 方法是把一个名称和一个错误处理函数传给 `codecs.register_error` 函数。
+
+#### 4.4.3  使用预期之外的编码加载模块时抛出的SyntaxError
+
+Python 3 默认使用 UTF-8 编码源码，Python 2（从 2.5 开始）则默认使用 ASCII。
+
+#### 4.4.4 如何找出字节序列的编码
+
+统一字符编码侦测包 Chardet （https://pypi.org/project/chardet/）能识别所支持的 30 中编码。
+
+Chardet 是一个 Python 库，可以在程序中使用，不过它也提供了命令行工具 chardetect 。
+
+#### 4.4.5  BOM：有用的鬼符
+
+BOM，字节序标记，（byte-order mark），指明编码时使用 Intel CPU 的小字节序。
+
+…… 
+
+##### 4.5  处理文本文件
+
+要尽早把输入（例如读取文件时）的字节序列编码成字符串。
+
+对输出来说，则要尽量晚地把字符串编码成字节序列。
+
+多数 Web 框架都是这样做的，使用框架时很少接触字节序列。例如，在 Django 中，视图应该输出 Unicode 字符串；Django 会负责把响应编码成字节序列，而且默认使用 UTF-8 编码。
+
+在 Python 3 中能轻松地采纳 Unicode 三明治的建议，因为内置的 open 函数会在读取文件时做必要的解码，以文本模式写入文件时还会做必要的编码，所以使用 `my_file.read()` 方法得到的以及传给 `my_file.write(text)` 方法的都是字符串对象。
+
+> Python 2.6 或 Python 2.7 用户要使用 `io.open()` 函数才能得到读写文件时自动执行的解码和编码操作。
+
+
+
+> 需要在多台设备中或多种场合下运行的代码，一定不能依赖默认编码。
+>
+> 打开文件时始终应该明确传入 `encoding=` 参数，因为不同的设备使用的默认编码可能不同，有时，隔一天也会发生变化。
+
+```python
+import sys, locale
+
+expressions = """
+    locale.getpreferredencoding()
+    type(my_file)
+    my_file.encoding
+    sys.stdout.isatty()
+    sys.stdout.encoding
+    sys.stdin.isatty()
+    sys.stdin.encoding
+    sys.stderr.isatty()
+    sys.stderr.encoding
+    sys.getdefaultencoding()
+    sys.getfilesystemencoding()
+"""
+
+if __name__ == '__main__':
+    my_file = open('dummy', 'w')
+
+    for expression in expressions.split():
+        value = eval(expression)
+        print(expression.rjust(30), '->', repr(value))
+```
+
+#### 4.6  为了正确比较而规范化Unicode字符串
+
+```python
+>>> s1 = 'café'
+>>> s2 = 'cafe\u0301'
+>>> s1, s2
+('café', 'café')
+>>> len(s1), len(s2)
+(4, 5)
+>>> s1 == s2
+False
+```
+
+
+
+```python
+>>> from unicodedata import normalize
+>>> s1 = 'café'
+>>> s2 = 'cafe\u0301'
+>>> len(s1), len(s2)
+(4, 5)
+>>> len(normalize('NFC', s1)), len(normalize('NFC', s2))
+(4, 4)
+>>> len(normalize('NFD', s1)), len(normalize('NFD', s2))
+(5, 5)
+>>> normalize('NFC', s1) == normalize('NFC', s2)
+True
+>>> normalize('NFD', s1) == normalize('NFD', s2)
+True
+```
+
+
+
+```python
+>>> from unicodedata import normalize, name
+>>> ohm = '\u2126'
+>>> name(ohm)
+'OHM SIGN'
+>>> ohm_c = normalize('NFC', ohm)
+>>> name(ohm_c)
+'GREEK CAPITAL LETTER OMEGA'
+>>> ohm == ohm_c
+False
+>>> normalize('NFC', ohm) == normalize('NFC', ohm_c)
+True
+```
+
+
+
+```python
+>>> from unicodedata import normalize, name
+>>> half = '½'
+>>> normalize('NFKC', half)
+'1⁄2'
+>>> four_squared = '4²'
+>>> normalize('NFKC', four_squared)
+'42'
+>>> micro = 'µ'
+>>> micro_kc = normalize('NFKC', micro)
+>>> micro, micro_kc
+('µ', 'μ')
+>>> ord(micro), ord(micro_kc)
+(181, 956)
+>>> name(micro), name(micro_kc)
+('MICRO SIGN', 'GREEK SMALL LETTER MU')
+```
+
+
+
+> 使用 NFKC 和 NFKD 规范化形式时要小心，而且只能在特殊情况中使用，
+>
+> 例如 搜索和索引，而不能用于持久存储，因为这两种转换会导致数据损失。
+
+#### 4.6.1  大小写折叠
+
+……
+
+#### 4.6.2  规范化文本匹配实用函数
+
+> 对大多数应用来说， NFC 是最好的规范化形式。
+>
+> 不区分大小写的比较应该使用 `str.casefold()`
+
+```python
+from unicodedata import normalize
+
+def nfc_equal(str1, str2):
+    return normalize('NFC', str1) == normalize('NFC', str2)
+
+def fold_equal(str1, str2):
+    return (normalize('NFC', str1).casefold() ==
+            normalize('NFC', str2).casefold())
+
+if __name__ == '__main__':
+    s1 = 'café'
+    s2 = 'cafe\u0301'
+    a = (s1 == s2)
+    print(a)
+    a = nfc_equal(s1, s2)
+    print(a)
+    a = nfc_equal('A', 'a')
+    print(a)
+    print('======')
+    s3 = 'Straße'
+    s4 = 'strasse'
+    a = (s3 == s4)
+    print(a)
+    a = nfc_equal(s3, s4)
+    print(a)
+    a = fold_equal(s3, s4)
+    print(a)
+    a = fold_equal(s1, s2)
+    print(a)
+    a = fold_equal('A', 'a')
+    print(a)
+```
+
+#### 4.7  Unicode文本排序
+
+https://pypi.org/project/pyuca/，Unicode 排序算法
+
+#### 4.8  Unicode数据库
+
+https://docs.python.org/3/library/unicodedata.html，Unicode Database
+
+#### 4.9  支持字符串和字节序列的双模式API
+
+……
+
+#### 4.10  本章小结
+
+……
+
+### 第5章
+
+**一等函数**
+
+在 Python 中，函数是一等对象。编程语言理论家把 “一等对象” 定义为满足下述条件的程序实体：
+
+- 在运行时创建
+- 能赋值给变量或数据结构中的元素
+- 能作为参数传给函数
+- 能作为函数的返回结果
+
+#### 5.1  把函数视作对象
+
+```python
+>>> def factorial(n):
+...     '''return n!'''
+...     return 1 if n < 2 else n * factorial(n-1)
+...
+>>> factorial(20)
+2432902008176640000
+>>> factorial.__doc__
+'return n!'
+>>> type(factorial)
+<class 'function'>
+```
+
+```python
+>>> help(factorial)
+Help on function factorial in module __main__:
+
+factorial(n)
+    return n!
+
+>>>
+```
+
+```python
+>>> fact = factorial
+>>> fact
+<function factorial at 0x00000000004D3E18>
+>>> fact(5)
+120
+>>> map(factorial, range(11))
+<map object at 0x00000000025CA1D0>
+>>> list(map(fact, range(11)))
+[1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800]
+```
+
+
+
+#### 5.2  高阶函数
+
+接受函数为参数，或者把函数作为结果返回的函数是*高阶函数*（higher-order function）。
+
+`map` 函数就是一例，内置函数 `sorted` 也是： 可选的 `key` 参数用于提供一个函数，它会应用到各个元素上进行排序。
+
+```python
+>>> fruits = ['strawberry', 'fig', 'apple', 'cherry', 'raspberry', 'banana']
+>>> sorted(fruits, key=len)
+['fig', 'apple', 'cherry', 'banana', 'raspberry', 'strawberry']
+```
+
+任何单参数函数都能作为 `key` 参数的值。
+
+```python
+>>> def reverse(word):
+...     return word[::-1]
+...
+>>> reverse('testing')
+'gnitset'
+>>> fruits = ['strawberry', 'fig', 'apple', 'cherry', 'raspberry', 'banana']
+>>> sorted(fruits, key=reverse)
+['banana', 'apple', 'fig', 'raspberry', 'strawberry', 'cherry']
+```
+
+在函数式编程范式中，最为人熟知的高阶函数有 `map`、`filter`、`reduce` 和 `apply` 。
+
+- `apply` 函数在 Python 2.3 中标记为过时，在 Python 3 中移除了，因为不再需要它了。
+- 如果想使用不定量的参数调用函数，可以编写 `fn(*args, **keywords)`，不用再编写 `apply(fn, args, kwargs)`。
+
+##### map、filter和reduce的现代替代品
+
+列表推导或生成器表达式具有 `map` 和 `filter` 两个函数的功能，而且更易于阅读。
+
+```python
+>>> list(map(fact, range(6)))
+[1, 1, 2, 6, 24, 120]
+>>> [fact(n) for n in range(6)]
+[1, 1, 2, 6, 24, 120]
+>>> list(map(fact, filter(lambda n: n % 2, range(6))))
+[1, 6, 120]
+>>> [fact(n) for n in range(6) if n % 2]
+[1, 6, 120]
+```
+
+reduce, sum
+
+```python
+>>> from functools import reduce
+>>> from operator import add
+>>> reduce(add, range(100))
+4950
+>>> sum(range(100))
+4950
+```
+
+`sum` 和 `reduce` 的通用思想是把某个操作连续应用到序列的元素上，累计之前的结果，把一系列值归约成一个值。
+
+`all` 和 `any` 也是内置的规约函数。
+
+- `all(iterable)` ： 如果 `iterable` 的每个元素都是真值，返回 `True`；`all([])` 返回 `True`。
+- `any(iterable)` ： 只要 `iterable` 中有元素是真值，就返回 `True`；`any([])` 返回 `False`。
+
+#### 5.3  匿名函数
+
+`lambda` 关键字在 Python 表达式内创建匿名函数。
+
+`lambda` 函数的定义体中不能赋值，也不能使用 `while` 和 `try` 等 Python 语句。
+
+在参数列表中最适合使用匿名函数。
+
+```python
+>>> fruits = ['strawberry', 'fig', 'apple', 'cherry', 'raspberry', 'banana']
+>>> sorted(fruits, key=lambda word: word[::-1])
+['banana', 'apple', 'fig', 'raspberry', 'strawberry', 'cherry']
+```
+
+除了作为参数传给高阶函数之外，Python 很少使用匿名函数。由于句法上的限制，非平凡的 `lambda` 表达式要么难以阅读，要么无法写出。
+
+如果使用 lambda 表达式导致一段代码难以理解，Fredrik Lundh 建议像下面这样重构。 Functional Programming HOWTO ： https://docs.python.org/2/howto/functional.html
+
+1.  编写注释，说明 lambda 表达式的作用。
+2. 研究一会儿注释，并找出一个名称来概括注释。
+3. 把 lambda 表达式转换成 def 语句，使用那个名称来定义函数。
+4. 删除注释。
+
+lambda 句法只是语法糖： 与 def 语句一样， lambda 表达式会创建函数对象。这是 Python 中几种可调用对象的一种。
+
+#### 5.4  可调用对象
+
+除了用户定义的函数，调用运算符（即`()`）还可以应用到其他对象上。如果想判断对象能否调用，可以使用内置的 `callable()` 函数。Python 数据模型文档列出了 `7` 中可调用对象。
+
+**（1） 用户定义的函数**
+
+​	使用 `def` 语句或 `lambda` 表达式创建。
+
+**（2） 内置函数**
+
+​	使用 C 语言（CPython）实现的函数，如 `len` 或 `time.strftime` 。
+
+**（3） 内置方法**
+
+​	使用 C 语言实现的方法，如 `dict.get` 。
+
+**（4） 方法**
+
+​	在类的定义体中定义的函数。
+
+**（5） 类**
+
+​	调用类时会运行类的 `__new__` 方法创建一个实例，然后运行 `__init__` 方法，初始化实例，最后把实例返回给调用方。因为 Python 没有 `new` 运算符，所以调用类相当于调用函数。（通常，调用类会创建那个类的实例，不过覆盖 `__new__` 方法的话，也可能出现其他行为。）
+
+**（6） 类的实例**
+
+​	如果类定义了 `__call__` 方法，那么它的实例可以作为函数调用。
+
+**（7） 生成器函数**
+
+​	使用 `yield` 关键字的函数或方法。调用生成器函数返回的是生成器对象。
+
+> Python 中有各种各样可调用的类型，因此判断对象能否调用，最安全的方法是使用内置的 `callable()` 函数：
+>
+> ```python
+> >>> abs, str, 13
+> (<built-in function abs>, <class 'str'>, 13)
+> >>> [callable(obj) for obj in (abs, str, 13)]
+> [True, True, False]
+> ```
+
+#### 5.5  用户定义的可调用类型
+
+不仅 Python 函数是真正的对象，任何 Python 对象都可以表现得像函数。为此，只需实现实例方法 `__call__` 。
+
+```python
+import random
+
+class BingoCage:
+
+    def __init__(self, items):
+        self._items = list(items)
+        random.shuffle(self._items)
+
+    def pick(self):
+        try:
+            return self._items.pop()
+        except IndexError:
+            raise LookupError('pick from empty BingoCage')
+
+    def __call__(self):
+        return self.pick()
+
+if __name__ == '__main__':
+    bingo = BingoCage(range(3))
+    a = bingo.pick()
+    print(a)
+    a = bingo()
+    print(a)
+    a = callable(bingo)
+    print(a)
+```
+
+实现 `__call__` 方法的类是创建函数类对象的简便方式，此时必须在内部维护一个状态，让它在调用之间可用。
+
+#### 5.6  函数内省
+
+除了 `__doc__` ，函数对象还有很多属性。使用 `dir` 函数可以探知：
+
+```python
+>>> def factorial(n):
+...     '''return n!'''
+...     return 1 if n < 2 else n * factorial(n-1)
+...
+>>> dir(factorial)
+['__annotations__', '__call__', '__class__', '__closure__', '__code__', '__defau
+lts__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__',
+ '__ge__', '__get__', '__getattribute__', '__globals__', '__gt__', '__hash__', '
+__init__', '__init_subclass__', '__kwdefaults__', '__le__', '__lt__', '__module_
+_', '__name__', '__ne__', '__new__', '__qualname__', '__reduce__', '__reduce_ex_
+_', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__']
+```
+
+列出常规对象没有而函数有的属性
+
+```python
+>>> class C: pass
+...
+>>> obj = C()
+>>> def func(): pass
+...
+>>> sorted(set(dir(func)) - set(dir(obj)))
+['__annotations__', '__call__', '__closure__', '__code__', '__defaults__', '__get__', '__globals__',
+ '__kwdefaults__', '__name__', '__qualname__']
+```
+
+#### 5.7  从定位参数到仅限关键字参数
+
+```python
+>>> def tag(name, *content, cls=None, **attrs):
+...     """生成一个或多个HTML标签"""
+...     if cls is not None:
+...         attrs['class'] = cls
+...     if attrs:
+...         attr_str = ''.join(' %s="%s"' % (attr, value)
+...                            for attr, value
+...                            in sorted(attrs.items()))
+...     else:
+...         attr_str = ''
+...     if content:
+...         return '\n'.join('<%s%s>%s</%s>' %
+...                          (name, attr_str, c, name)
+...                          for c in content)
+...     else:
+...         return '<%s%s />' % (name, attr_str)
+...
+>>> tag('br')
+'<br />'
+>>> tag('p', 'hello')
+'<p>hello</p>'
+>>> print(tag('p', 'hello', 'world'))
+<p>hello</p>
+<p>world</p>
+>>> tag('p', 'hello', id=33)
+'<p id="33">hello</p>'
+>>> print(tag('p', 'hello', 'world', cls='sidebar'))
+<p class="sidebar">hello</p>
+<p class="sidebar">world</p>
+>>> tag(content='testing', name="img")
+'<img content="testing" />'
+>>> my_tag = {'name': 'img', 'title': 'Sunset Boulevard',
+...               'src': 'sunset.jpg', 'cls': 'framed'}
+>>> tag(**my_tag)
+'<img class="framed" src="sunset.jpg" title="Sunset Boulevard" />'
+```
+
+`inspect` 模块 ……
+
+#### 5.9  函数注解
+
+……
+
+
+
+### 第6章
+
+**使用一等函数实现设计模式**
+
+Norvig 建议在有一等函数的语言中重新审视 “策略”、“命令”、“模板方法” 和 “访问者” 模式。通常，我们可以把这些模式中涉及的某些类的实例替换成简单的函数，从而减少样板代码。
+
+如果合理利用作为一等对象的函数，某些涉及模式可以简化，“策略” 模式就是其中一个很好的例子。
+
+> 《设计模式：可复用面向对象软件的基础》一书是这样概述 “策略” 模式的：
+>
+> 定义一系列算法，把它们逐个封装起来，并且使它们可以相互替换。本模式使得算法可以独立于使用它的客户而变化。
+
+电商领域有个功能明显可以使用 “策略” 模式，即根据客户的属性或订单中的商品计算折扣。
+
+假如一个网店制定了下述折扣规则：
+
+- 有 1000 或以上积分的顾客，每个订单享 5% 折扣；
+- 同一订单中，单个商品的数量达到 20 个或以上，享 10% 折扣；
+- 订单中的不同商品达到 10 个或以上，享 7% 折扣。
+
+#### 6.1.1  经典 “策略” 模式
+
+```python
+from abc import ABC, abstractmethod
+from collections import namedtuple
+
+Customer = namedtuple('Customer', 'name fidelity')
+
+class LineItem:
+    def __init__(self, product, quantity, price):
+        self.product = product
+        self.quantity = quantity
+        self.price = price
+
+    def total(self):
+        return self.price * self.quantity
+
+class Order:
+    def __init__(self, customer, cart, promotion=None):
+        self.customer = customer
+        self.cart = cart
+        self.promotion = promotion
+
+    def total(self):
+        if not hasattr(self, '__total'):
+            self.__total = sum(item.total() for item in self.cart)
+        return self.__total
+
+    def due(self):
+        if self.promotion is None:
+            discount = 0
+        else:
+            discount = self.promotion.discount(self)
+        return self.total() - discount
+
+    def __repr__(self):
+        fmt = '<Order total: {:.2f} due: {:.2f}>'
+        return fmt.format(self.total(), self.due())
+
+class Promotion(ABC):
+    @abstractmethod
+    def discount(self, order):
+        """返回折扣金额（正值）"""
+
+class FidelityPromo(Promotion):
+    """为积分为 1000 或以上的顾客提供 5% 折扣"""
+    def discount(self, order):
+        return order.total() * .05 if order.customer.fidelity >= 1000 else 0
+
+class BulkItemPromo(Promotion):
+    """单个商品为 20 个或以上时提供 10% 折扣"""
+    def discount(self, order):
+        discount = 0
+        for item in order.cart:
+            if item.quantity >= 20:
+                discount += item.total() * .1
+        return discount
+
+class LargeOrderPromo(Promotion):
+    """订单中的不同商品达到 10 个或以上时提供 7% 折扣"""
+    def discount(self, order):
+        distinct_items = {item.product for item in order.cart}
+        if len(distinct_items) >= 10:
+            return order.total() * .07
+        return 0
+```
+
+测试：
+
+```python
+>>> joe = Customer('John Doe', 0)
+>>> ann = Customer('Ann Smith', 1100)
+>>> cart = [LineItem('banana', 4, .5),
+...             LineItem('apple', 10, 1.5),
+...             LineItem('watermellon', 5, 5.0)]
+>>> Order(joe, cart, FidelityPromo())
+<Order total: 42.00 due: 42.00>
+>>> Order(ann, cart, FidelityPromo())
+<Order total: 42.00 due: 39.90>
+>>> banana_cart = [LineItem('banana', 30, .5),
+...                    LineItem('apple', 10, 1.5)]
+>>> Order(joe, banana_cart, BulkItemPromo())
+<Order total: 30.00 due: 28.50>
+>>> long_order = [LineItem(str(item_code), 1, 1.0)
+...                   for item_code in range(10)]
+>>> Order(joe, long_order, LargeOrderPromo())
+<Order total: 10.00 due: 9.30>
+>>> Order(joe, cart, LargeOrderPromo())
+<Order total: 42.00 due: 42.00>
+```
+
+#### 6.1.2  使用函数实现 “策略” 模式
+
+在上面的代码中，每个具体策略都是一个类，而且都只定义了一个方法，即 `discount` 。此外，策略实例没有状态（没有实例属性）。你可能会说，它们看起来像是普通的函数——的确如此。
+
+```python
+from collections import namedtuple
+
+Customer = namedtuple('Customer', 'name fidelity')
+
+class LineItem:
+    def __init__(self, product, quantity, price):
+        self.product = product
+        self.quantity = quantity
+        self.price = price
+
+    def total(self):
+        return self.price * self.quantity
+
+class Order:
+    def __init__(self, customer, cart, promotion=None):
+        self.customer = customer
+        self.cart = cart
+        self.promotion = promotion
+
+    def total(self):
+        if not hasattr(self, '__total'):
+            self.__total = sum(item.total() for item in self.cart)
+        return self.__total
+
+    def due(self):
+        if self.promotion is None:
+            discount = 0
+        else:
+            discount = self.promotion(self)
+        return self.total() - discount
+
+    def __repr__(self):
+        fmt = '<Order total: {:.2f} due: {:.2f}>'
+        return fmt.format(self.total(), self.due())
+
+def fidelity_promo(order):
+    """为积分 1000或以上 的顾客提供 5% 折扣"""
+    return order.total() * .05 if order.customer.fidelity >= 1000 else 0
+
+def bulk_item_promo(order):
+    """单个商品为 20 个或以上时提供 10% 折扣"""
+    discount = 0
+    for item in order.cart:
+        if item.quantity >= 20:
+            discount += item.total() * .1
+    return discount
+
+def large_order_promo(order):
+    """订单中的不同商品达到 10 个或以上时提供 7% 折扣"""
+    distinct_items = {item.product for item in order.cart}
+    if len(distinct_items) >= 10:
+        return order.total() * .07
+    return 0
+```
+
+```python
+import os, sys
+n = os.system('cls')
+
+>>> sys.path.append('F:\\wxg103\\pythonProjects\\FluentPython\\ch06')
+>>> from example6_3 import *
+>>> joe = Customer('John Doe', 0)
+>>> ann = Customer('Ann Smith', 1100)
+>>> cart = [LineItem('banana', 4, .5),
+...             LineItem('apple', 10, 1.5),
+...             LineItem('watermellon', 5, 5.0)]
+>>> Order(joe, cart, fidelity_promo)
+<Order total: 42.00 due: 42.00>
+>>> Order(ann, cart, fidelity_promo)
+<Order total: 42.00 due: 39.90>
+>>> banana_cart = [LineItem('banana', 30, .5),
+...                    LineItem('apple', 10, 1.5)]
+>>> Order(joe, banana_cart, bulk_item_promo)
+<Order total: 30.00 due: 28.50>
+>>> long_order = [LineItem(str(item_code), 1, 1.0)
+...                   for item_code in range(10)]
+>>> Order(joe, long_order, large_order_promo)
+<Order total: 10.00 due: 9.30>
+>>> Order(joe, cart, large_order_promo)
+<Order total: 42.00 due: 42.00>
+```
+
+> 策略模式，常常要结合享元模式，
+>
+> 共享，这样不必在每个新的上下文中使用相同的策略时不断新建具体策略对象，从而减少消耗。
+>
+> 函数比用户定义类的实例轻量，而且无需使用“享元”模式，因为函数在 Python 编译模块时只会创建一次。
+>
+> 普通的函数也是 “可共享的对象，可以同时在多个上下文中使用”。
+
+#### 6.1.3  选择最佳策略
+
+```python
+promos = [fidelity_promo, bulk_item_promo, large_order_promo]
+
+def best_promo(order):
+    """选择可用的最佳折扣"""
+    return max(promo(order) for promo in promos)
+```
+
+测试
+
+```python
+workon py3
+python
+
+>>> import os, sys
+>>> n = os.system('cls')
+
+>>> sys.path.append('F:\\wxg103\\pythonProjects\\FluentPython\\ch06')
+>>> from example6_3 import *
+>>>
+>>> joe = Customer('John Doe', 0)
+>>> ann = Customer('Ann Smith', 1100)
+>>> cart = [LineItem('banana', 4, .5),
+...             LineItem('apple', 10, 1.5),
+...             LineItem('watermellon', 5, 5.0)]
+>>> banana_cart = [LineItem('banana', 30, .5),
+...                    LineItem('apple', 10, 1.5)]
+>>> long_order = [LineItem(str(item_code), 1, 1.0)
+...                   for item_code in range(10)]
+>>>
+>>> Order(joe, long_order, best_promo)
+<Order total: 10.00 due: 9.30>
+>>> Order(joe, banana_cart, best_promo)
+<Order total: 30.00 due: 28.50>
+>>> Order(ann, cart, best_promo)
+<Order total: 42.00 due: 39.90>
+```
+
+虽然，以上示例可用，且易于阅读，但是有些重复可能会导致不易察觉的缺陷：
+
+若想添加新的促销策略，要定义相应的函数，还要记得把它添加到 `promos` 列表中；否则，当新促销函数显式地作为参数传递给 `Order` 时，它是可用的，但是 `best_promo` 不会考虑它。
+
+#### 6.1.4  找出模块中的全部策略
+
+```python
+# promos = [fidelity_promo, bulk_item_promo, large_order_promo]
+
+promos = [globals()[name] for name in globals()
+           if name.endswith('_promo')
+           and name != 'best_promo']
+
+def best_promo(order):
+    """选择可用的最佳折扣"""
+    return max(promo(order) for promo in promos)
+```
+
+##### 使用 `inspect`
+
+另一种方式是： 将所有折扣函数，单独放到一个模块中，比如在 `ch06` 下新建一个 `promotions.py` 文件，
+
+```python
+# promotions.py
+def fidelity_promo(order):
+    """为积分 1000或以上 的顾客提供 5% 折扣"""
+    return order.total() * .05 if order.customer.fidelity >= 1000 else 0
+
+def bulk_item_promo(order):
+    """单个商品为 20 个或以上时提供 10% 折扣"""
+    discount = 0
+    for item in order.cart:
+        if item.quantity >= 20:
+            discount += item.total() * .1
+    return discount
+
+def large_order_promo(order):
+    """订单中的不同商品达到 10 个或以上时提供 7% 折扣"""
+    distinct_items = {item.product for item in order.cart}
+    if len(distinct_items) >= 10:
+        return order.total() * .07
+    return 0
+```
+
+然后再建立一个 `promotions_test.py` 文件
+
+```python
+# promotions_test.py
+from collections import namedtuple
+import inspect
+from ch06 import promotions
+
+Customer = namedtuple('Customer', 'name fidelity')
+
+class LineItem:
+    def __init__(self, product, quantity, price):
+        self.product = product
+        self.quantity = quantity
+        self.price = price
+
+    def total(self):
+        return self.price * self.quantity
+
+class Order:
+    def __init__(self, customer, cart, promotion=None):
+        self.customer = customer
+        self.cart = cart
+        self.promotion = promotion
+
+    def total(self):
+        if not hasattr(self, '__total'):
+            self.__total = sum(item.total() for item in self.cart)
+        return self.__total
+
+    def due(self):
+        if self.promotion is None:
+            discount = 0
+        else:
+            discount = self.promotion(self)
+        return self.total() - discount
+
+    def __repr__(self):
+        fmt = '<Order total: {:.2f} due: {:.2f}>'
+        return fmt.format(self.total(), self.due())
+
+promos = [func for name, func in
+          inspect.getmembers(promotions, inspect.isfunction)]
+
+def best_promo(order):
+    """选择可用的最佳折扣"""
+    return max(promo(order) for promo in promos)
+
+if __name__ == '__main__':
+    joe = Customer('John Doe', 0)
+    ann = Customer('Ann Smith', 1100)
+    cart = [LineItem('banana', 4, .5),
+            LineItem('apple', 10, 1.5),
+            LineItem('watermellon', 5, 5.0)]
+    banana_cart = [LineItem('banana', 30, .5),
+                   LineItem('apple', 10, 1.5)]
+    long_order = [LineItem(str(item_code), 1, 1.0)
+                  for item_code in range(10)]
+    a = Order(joe, long_order, best_promo)
+    print(a)
+    a = Order(joe, banana_cart, best_promo)
+    print(a)
+    a = Order(ann, cart, best_promo)
+    print(a)
+```
+
+重点在下面的几行代码：
+
+```python
+import inspect
+from ch06 import promotions
+
+promos = [func for name, func in
+          inspect.getmembers(promotions, inspect.isfunction)]
+```
+
+> 动态收集促销折扣函数更为显式的一种方案是使用简单的装饰器。将在第7章讨论。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
