@@ -84,6 +84,42 @@ https://docs.python.org/3/library/weakref.html ， weakref —— Weak reference
 
 ## 第 9 章
 
+**符合Python风格的对象**
+
+> P207 ， 示例9-2  vector2d_v0.py ，这个类中的很多用法对我来说都很新颖，这个类值得背诵！摘抄几段震撼我的正文：
+>
+> （3） 定义 `__iter__` 方法，把 `Vector2d` 实例变成可迭代的对象，这样才能拆包（例如，`x, y = my_vector`）。
+>
+> （4） 因为 `Vector2d` 实例是可迭代的对象，所以 `*self` 会把 `x` 和 `y` 分量提供给 `format` 函数。
+>
+> （5） `return str(tuple(self))`  从可迭代的 `Vector2d` 实例中可以轻松地得到一个元组，显示为一个有序对。
+
+> P210 ， `@classmethod`， `@staticmethod`
+>
+> 被 `@classmethod` 装饰的函数，第一个参数始终是类本身；被`@staticmethod`修饰的函数，是一个与类无关的函数，作者认为`@staticmethod`没什么作用。
+
+> P211 ， 格式化
+>
+> https://docs.python.org/3/library/string.html#formatspec
+>
+>
+
+### psutil
+
+> P221 ， 示例9-12 中使用了 P566 示例 A-4的"memtest.py"，但是这里的代码不能在windows下运行，因为代码中使用了，只能在Unix下使用的API `resource` （https://docs.python.org/3/library/resource.html）
+>
+> 替代方案就是使用 psutil ，文档参考 https://psutil.readthedocs.io/en/latest/ 
+>
+> （不能完美替代，使用`resource`可以取得具体应用使用的内存，我使用`psutil`，只能笼统的计算总的内存）
+
+## 第 10 章
+
+**序列的修改、散列和切片**
+
+
+
+
+
 
 
 
