@@ -122,7 +122,7 @@ https://github.com/dreamhead/moco/blob/master/moco-doc/apis.md#http-method ，�
 
 ### 发现
 
-
+D:\wxg_server\server_moco ， 这个是放 standalone 文件的目录。
 
 （1）要启动多个，需要配置多个 json 文件
 
@@ -179,9 +179,38 @@ java -jar moco-runner-0.12.0-standalone.jar http -p 8089 -c bar.json
 
 ![](./imgs/129_moco_002.png)
 
+（5）json request
 
+```json
+[{
+  "request" :
+	{
+		"method" : "post",
+	  "uri" : "/json",
+	  "json": {
+            "foo": "bar"
+        }
+	},
+  "response" :
+	{
+	  "text" : "foo"
+	}
+}]
+```
 
+```
+java -jar moco-runner-0.12.0-standalone.jar http -p 8089 -c jsonReq.json
+```
 
+![](./imgs/129_moco_003.png)
+
+今天又犯傻了，用 `GET` 测试了好一会儿 POST 请求，
+
+- 一定要按部就班的设置，如果匆忙建立测试环境，出问题后，一定要按部就班的检查
+
+选择 `Text` 还是 `JSON(application/json)` 都可以，对比上下两图：
+
+![](./imgs/129_moco_004.png)
 
 
 
