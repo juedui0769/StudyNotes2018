@@ -56,7 +56,41 @@
 @ComponentScan(basePackages = {"com.wxg.controller"})
 ```
 
-看上面的代码就明白了这个“坑”的意思了。
+看上面的代码就明白这个“坑”的意思了。
+
+- 不在同一个包下，需要使用 `@ComponentScan(basePackages = {"com.wxg.controller"})` 
+- 这里要注意一下，出现问题时， 用这个调试一下代码，观察下结果！
+
+### （2）@RequestMapping
+
+```java
+@RequestMapping("/hello")
+public String hello(@RequestParam String name) {
+	return "hello "+name+
+```
+
+```java
+@RequestMapping("/hello/{name}")
+public String index(@PathVariable("name") String name) {
+	return ...
+```
+
+看上面的两段代码，也是坑点
+
+- 第一段： `.../hello?name=xxx`
+- 第二段： `.../hello/xxx`
+
+我在这里被坑了很久，我从网上下载的代码，测试时，一直出现 404 ，
+
+- 我一直用 `.../hello?name=xxx` ，没注意到第二处要使用 `.../hello/xxx`
+- 再出现 `404` 时，要首先检查 `@RequestMapping(` ，不要怀疑错了！
+- 不要怀疑错了！
+- 不要怀疑错了！！
+- 不要怀疑错了！！！
+
+
+
+
 
 
 
