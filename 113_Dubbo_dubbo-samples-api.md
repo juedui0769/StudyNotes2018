@@ -1,3 +1,9 @@
+
+
+> 2019年3月5日20:10:51， 这个文档是半成品，草稿！现在阅读起来很晦涩，只有类图有点小作用。
+
+
+
 # Dubbo
 
 - https://github.com/apache/incubator-dubbo
