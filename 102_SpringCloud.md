@@ -48,6 +48,152 @@
 
 
 
+
+
+## 知识点
+
+### （1）maven
+
+- F:\wxg115_springboot2\cloud-parent ， Maven聚合
+- `dependencyManagement` ， `plugin`  可以放在 parent 中，子module都可以继承， 如下：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.wxg.cloud</groupId>
+    <artifactId>cloud-parent</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>eureka-server</module>
+        <module>hello-provider</module>
+        <module>hello-consumer</module>
+    </modules>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.3.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <spring-cloud.version>Dalston.RELEASE</spring-cloud.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+### （2）spring.profiles.active
+
+```
+src/main/resources
+|- application-peer1.yml
+|- application-peer2.yml
+```
+
+```yml
+spring:
+  application:
+    name: spring-cloud-producer
+  profiles: peer1
+server:
+  port: 9000
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8000/eureka/
+
+variable:
+  a: producer 1
+```
+
+```yml
+spring:
+  application:
+    name: spring-cloud-producer
+  profiles: peer2
+server:
+  port: 9003
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8000/eureka/
+
+variable:
+  a: producer 2
+```
+
+- 上面是两个配置文件的内容，
+- `variable` 可以在代码中直接引用到，如下：
+
+```java
+@Configuration
+@RestController
+public class HelloController {
+
+    @Value("${variable.a}")
+    private String a;
+
+    @RequestMapping("/hello")
+    public String hello(@RequestParam String name) {
+        return "hello "+name+"，"+ a +", send first messge";
+    }
+}
+```
+
+- `a` 变量会因不同的配置文件，而不同，在启动时指定配置，如下：
+
+```sh
+java -jar hello-provider-1.0-SNAPSHOT.jar --spring.profiles.active=peer1
+java -jar hello-provider-1.0-SNAPSHOT.jar --spring.profiles.active=peer2
+```
+
+- https://blog.csdn.net/u010606397/article/details/80713968  ，这篇博文介绍的比较详细，可以参考。
+
+
+
+
+
+
+
+
+
 ## 踩坑记录
 
 ### （1）package
@@ -88,11 +234,12 @@ public String index(@PathVariable("name") String name) {
 - 不要怀疑错了！！
 - 不要怀疑错了！！！
 
+### （3）扫描类的位置
 
+- ![](./imgs/102_SpringCloud_002.png)
 
-
-
-
+- 如上图，`ConsumerApplication` 一开始是放在 `start` 包下面的，但是，启动报错，无奈，提出来放到 `start` 的上级包下面。
+- 这应该形成一个规范吧！（网上，有找到一些资料，但，解决办法对我不适用，也许是版本的问题）
 
 
 

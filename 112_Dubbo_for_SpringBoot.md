@@ -7,6 +7,10 @@
 - http://maven.aliyun.com/mvn/view
 - https://rdc.aliyun.com/my ，通过这个链接进入，需要登录。找到管理控制台-搜索-云效，……然后按照说明一步一步的操作即可！
 
+> 2019年3月5日19:54:04，“云效”只对它的管理控制台中的项目有效，不能直接提交，要手动提交！
+
+
+
 ## dubbo文档
 
 - https://dubbo.gitbooks.io/dubbo-user-book/content/preface/background.html
@@ -527,13 +531,13 @@ public class DubboConsumerDemo {
 
 这给我们一个提示，如果你导入项目，发现没有`Dependencies`那一定是parent（在这里就是`Dubbo Spring Boot Samples (root)`）中缺少了`groupId`，`artifactId`和`version`一般不会省略，只有`groupId`在多模块项目中可以省略，因为整个项目都是共用一个`groupId`的，子模块可以继承parent中的`groupId`，所以子模块可以省略这一行。复制模块时要小心！
 
-## 02 没有"management"
+## 02 "dependencyManagement"
 
 这个问题比较好定位，`Dubbo Spring Boot Samples : API`模块中只包含一个接口，不需要任何额外的maven依赖，`clean compile`是没问题的，但是`package`时却报错了。
 
-```java
-[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:2.1.0.RELEASE:repackage (repackage) on project dubbo-spring-boot-sample-api: Execution repackage of goal org.springframework.boot:spring-boot-maven-plugin:2.1.0.RELEASE:repackage failed: Unable to find main class -> [Help 1]
-```
+> [ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:2.1.0.RELEASE:repackage (repackage) on project dubbo-spring-boot-sample-api: Execution repackage of goal org.springframework.boot:spring-boot-maven-plugin:2.1.0.RELEASE:repackage failed: Unable to find main class -> [Help 1]
+
+
 下面这行是重点
 ```java
 Execution repackage of goal org.springframework.boot:spring-boot-maven-plugin:2.1.0.RELEASE:repackage failed
@@ -543,7 +547,11 @@ Execution repackage of goal org.springframework.boot:spring-boot-maven-plugin:2.
 
 修改了parent（`Dubbo Spring Boot Samples (root)`）中的plugin配置之后，再`clean package`就正常了！
 
-
+> 2019年3月5日19:39:13
+>
+> 关于“dependencyManagement”的详细信息参考： Maven实战-徐晓斌，8.3.3 依赖管理
+>
+> 在 dependencyManagement 元素下的依赖声明不会引入实际的依赖，不过它能够约束 dependencies 下的依赖使用。
 
 # dubbo-服务降级
 
