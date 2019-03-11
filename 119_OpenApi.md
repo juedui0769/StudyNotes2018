@@ -6,9 +6,9 @@
 
 centos7上，还没有vim，`yum install vim`，安装一个。
 
-https://www.cnblogs.com/songlen/p/6883522.html，本文讲解vim如何与外界复制粘贴。
+<https://www.cnblogs.com/songlen/p/6883522.html>，本文讲解vim如何与外界复制粘贴。
 
-https://blog.csdn.net/j_sure/article/details/41014641，这篇是个补充，但是，在我的电脑上操作失败。
+<https://blog.csdn.net/j_sure/article/details/41014641>，这篇是个补充，但是，在我的电脑上操作失败。
 
 对于vim与外界的复制粘贴，还得花费点精力研究一下，先暂停！
 
@@ -58,15 +58,15 @@ source /etc/profile
 java -version
 ```
 
-JDK的安装，可以参考 https://jingyan.baidu.com/article/5225f26bafc0f3e6fb090871.html
+JDK的安装，可以参考 <https://jingyan.baidu.com/article/5225f26bafc0f3e6fb090871.html>
 
 ### Redis
 
 这一年，倒腾的东西太多，记得的很少。Redis的安装，我之前有做笔记，安装有点麻烦，需要下载源码，再编译…… ，感觉有点烦，不如使用 docker ，估计会简单方便很多！
 
-https://hub.docker.com/_/redis/ ， 这个是 docker 上的 redis 页面，可以参考！
+<https://hub.docker.com/_/redis/> ， 这个是 docker 上的 redis 页面，可以参考！
 
-还可以参考，https://blog.csdn.net/weixin_38956287/article/details/80423607，这篇博文，来快速体验 docker redis。
+还可以参考，<https://blog.csdn.net/weixin_38956287/article/details/80423607>，这篇博文，来快速体验 docker redis。
 
 ```sh
 cd /home/wxg
@@ -833,13 +833,13 @@ broker
 
 #### NameServer
 
-https://blog.csdn.net/mr253727942/article/details/52637126 ， 这篇博文介绍的比较详细，可以参考。
+<https://blog.csdn.net/mr253727942/article/details/52637126> ， 这篇博文介绍的比较详细，可以参考。
 
 - 早期，RocketMq是使用 zookeeper 来做命名服务的，后来，为向轻量级转化，改为使用自己的 nameServer 组件。
 
 #### broker
 
-https://blog.csdn.net/binzhaomobile/article/details/73332463，这篇文章中的图示，让我明白了boker的含义。值得阅读！
+<https://blog.csdn.net/binzhaomobile/article/details/73332463>，这篇文章中的图示，让我明白了boker的含义。值得阅读！
 
 
 
