@@ -18,7 +18,18 @@
   - 可以直接在`settings`中搜索
 - 另外，在gitee中搜索之前的笔记，“Other”下有IDEA相关的笔记记录！
 
+## 常用快捷键
 
+### Navigate
+
+- 直接在菜单 `Navigate` 中查看对应的快捷键即可！这个菜单下的快捷键是最常用的。
+- ![](./imgs/132_IDEA_Navigate_shortcut_keys.png)
+- 上图框选的就是经常要用的快捷操作了，同样因为重新安装的缘故，我还没来得及更新快捷键，`Implementation(s)`是我经常要用的，用来查看一个类的子类的。但是默认是 `Ctrl + Alt + B` ，这个太长了，我记得在 Eclipse 中，对应的快捷键是`Ctrl + T` 。
+- ~~这里，我把 `Declaration` 和 `Implementation(s)` 的快捷键互换一下。~~
+  - `Declaration`   可以使用 `Ctrl + 左键` 来调用，如下图：
+  - ![](./imgs/132_IDEA_Implementations_shortcut_keys.png)
+  - 因为以上几个操作非常，常用，所以，也都绑定了鼠标左键的快捷操作。
+- `Ctrl + U` , `Ctrl + H` , `Ctrl + F12 (Ctrl + O)` （我增加了Ctrl+O），这个几个都是常用的快捷键。
 
 
 
