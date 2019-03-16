@@ -50,7 +50,13 @@
 
 
 
+## 多次运行main方法
 
+- 参考： <https://blog.csdn.net/zjcjava/article/details/78292449> ， 这篇文章中的是 取消勾选`Single instance only`
+- 在我的IDEA中是，勾选 `Allow running in parallel`
+- 总结
+  - （1） 老IDEA 取消勾选 `Single instance only`
+  - （2） 新IDEA 勾选 `Allow running in parallel`
 
 
 
