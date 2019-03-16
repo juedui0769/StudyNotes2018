@@ -30,6 +30,9 @@
   - ![](./imgs/132_IDEA_Implementations_shortcut_keys.png)
   - 因为以上几个操作非常，常用，所以，也都绑定了鼠标左键的快捷操作。
 - `Ctrl + U` , `Ctrl + H` , `Ctrl + F12 (Ctrl + O)` （我增加了Ctrl+O），这个几个都是常用的快捷键。
+- 跳转不是`Alt + 左右箭头`， 而是 `Ctrl + Alt + 左右箭头` ，如下图（比较坑）：
+- ![](./imgs/132_IDEA_shortcut_002.png)
+- 
 
 
 
