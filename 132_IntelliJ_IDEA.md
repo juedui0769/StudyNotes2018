@@ -58,6 +58,32 @@
   - （1） 老IDEA 取消勾选 `Single instance only`
   - （2） 新IDEA 勾选 `Allow running in parallel`
 
+## IDEA can not download source
+
+- "can not download source" ，今天（2019年3月18日），使用IDEA时，无法下载源码
+
+- 在百度搜索答案，<https://blog.csdn.net/upshi/article/details/78623723> 给出了答案
+
+- 在项目所在的根目录下执行下面的命令， 
+
+- ```
+  mvn dependency:resolve -Dclassifier=sources
+  ```
+
+- 然后刷新项目，刷新Maven（右侧Maven工具栏）
+
+- 再点击代码，就可以看到源码了。
+
+- 另：
+
+- `Appearance & Behavior -> System Settings -> Updates`
+
+  - 取消勾选 `Use secure connection`
+
+- `Build,Execution,Deployment -> Build Tools -> Maven -> Importing`
+
+  - 勾选 `Automatically download: Sources`
+
 
 
 # End
