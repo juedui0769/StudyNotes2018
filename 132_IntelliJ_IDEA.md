@@ -84,6 +84,15 @@
 
   - 勾选 `Automatically download: Sources`
 
+> 开始怀疑错方向，以为和Maven仓库有关呢，我把阿里云切换为华为云，发现还是一样的不能下载source源码。
+
+- 以上方法，治标不治本
+- 我最终更换了Maven版本，解决了此问题
+  - 将 3.6.0 更换为 3.3.9
+  - 更改环境变量之后，要到 IDEA 中重新指定一下： `Build,Execution,Deployment -> Build Tools -> Maven`  ， `Maven home directory : C:/software/apache-maven-3.3.9`
+
+- 
+
 
 
 # End
