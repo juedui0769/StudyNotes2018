@@ -1250,6 +1250,83 @@ https://www.cnblogs.com/MOBIN/p/5597215.html， 这篇文章对JDK的动态代�
 
 
 
+# 2019年3月18日
+
+> 再启动
+
+## apigateway
+
+代码结构
+
+```java
+com.crt.openapi
+    |- apigateway
+        |- core.concurrent
+            |- task
+                |- AbstractTask.java
+                |- OpenApiHttpReqTask.java
+            |- ThreadPoolHandler.java
+        |- web.controller
+            |- OpenApiController.java
+        |- AppContext.java
+        |- StartServer.java
+    |- aspect
+        |- OpenApiExceptionHandlerAspect.java
+    |- core
+        |- adapter
+            |- CheckReqHandler.java
+            |- CheckRespHandler.java
+            |- CheckThirdPartReqHandler.java
+            |- OpenApiReqAsyncHandler.java
+            |- OpenApiReqHandler.java
+            |- OpenApiRspHandler.java
+            |- SignHandler.java
+        |- OpenApiAcceptHandler.java
+        |- OpenApiHandler.java
+        |- OpenApiHandlerExecuteTemplate.java
+        |- OpenApiResponseUtils.java
+    |- interceptor
+        |- OpenApiValidateInterceptor.java
+        |- ParamInterceptorHelp.java
+        |- RsParamInterceptor.java
+        |- SandboxInterceptor.java
+        |- ThirdPartParamInterceptor.java
+        |- WsParamInterceptor.java
+    |- netty
+        |- DispatcherServletChannelInitializer.java
+        |- OpenapiHttpServletResponse.java
+        |- ServletNettyHandler.java
+    |- task
+        |- LoadObjectTask.java
+        |- ScheculedTask.java
+        |- ThreadPoolExecutor.java
+    |- utils
+        |- OpenApiFutureCallback.java
+        |- XMLTransformUtils.java
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -93,6 +93,17 @@
 
 - 
 
+## IDEA与Maven版本冲突
+
+- IDEA can not download source
+- 如上
+- 我使用IDEA是社区版（`IntelliJ IDEA 2018.3 (Community Edition) Build #IC-183.4284.148`,`build on November 21, 2018`）
+- 我使用Maven 3.6.0 会出现问题，切换到 3.3.9 就没问题。
+  - can not download source
+  - 使用3.6.0不能下载java源码
+
+
+
 
 
 # End
