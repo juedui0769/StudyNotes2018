@@ -1256,7 +1256,7 @@ https://www.cnblogs.com/MOBIN/p/5597215.html， 这篇文章对JDK的动态代�
 
 ## apigateway
 
-代码结构
+### 代码结构
 
 ```java
 com.crt.openapi
@@ -1304,6 +1304,11 @@ com.crt.openapi
         |- OpenApiFutureCallback.java
         |- XMLTransformUtils.java
 ```
+
+![](./imgs/119_crt_gateway_02.png)
+
+![](./imgs/119_crt_gateway.png)
+
 
 
 
