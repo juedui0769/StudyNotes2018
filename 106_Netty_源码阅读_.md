@@ -230,6 +230,14 @@ private synchronized void checkNotifyWaiters() {
 
 
 
+## NioEventLoop#processSelectedKey
+
+![](./imgs/106_netty_NioEventLoop_processSelectKey.png)
+
+- 对应，<https://segmentfault.com/q/1010000018632056/a-1020000018633929>
+
+
+
 
 
 # End
