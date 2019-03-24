@@ -1,4 +1,53 @@
+
+
 # Netty源码阅读
+
+## NioEventLoop#processSelectedKey
+
+- 如下图，从 `NioEventLoop#processSelectedKey` 按图索骥，可以找到 Server 端，创建`SocketChannel` 的线索
+
+![](./imgs/106_netty_NioEventLoop_processSelectKey.png)
+
+- 对应思否上的一个问题： <https://segmentfault.com/q/1010000018632056/a-1020000018633929>
+
+
+
+## 误解
+
+- `ctx` 比 `channel` 小， 没创建一个`handler`就要创建一个`ctx`，`ctx`相当于是`handler`与`pipeline`的纽带，它们都是运行在`channel`上的。`channel`才是航空母舰，`ctx`只是某架飞机的驾驶员（或管家）而已，不要颠倒主次！
+- 一个`channel`上只有一个`pipeline`，相当于只有一条跑道；但，可以容纳很多`handler`，每个`handler`都有一个与之对应的`ctx`。
+
+```java
+ctx.writeAndFlush();
+channel.writeAndFlush(); // -> pipeline.writeAndFlush();
+```
+
+如上，在 `ctx` 上调用 `writeAndFlush()` ，与在 `channel` 上调用 `writeAndFlush()` 有什么不同呢？
+
+![](./imgs/106_netty_channel_writeAndFlush.png)
+
+- 上图，`Channel`的实现`AbstractChannel`，及`ChannelPipeline`的实现`DefaultChannelPipeline`，
+- 可以看出，对`channel`的调用最终会转交给`pipeline`
+
+![](./imgs/106_netty_pipeline_ctx.png)
+
+- 如上图，`tail` 的类型是 `AbstractChannelHandlerContext` ，
+- 那么，最终，对`pipeline`的调用会转交给`ctx`
+- 最终都是对 `ctx` 的调用。
+
+![](./imgs/106_netty_channel_writeAndFlush102.png)
+
+- 上图可以说明，`ctx`和`channel`上调用的区别。
+
+
+
+
+
+
+
+
+
+--------
 
 
 
@@ -230,11 +279,6 @@ private synchronized void checkNotifyWaiters() {
 
 
 
-## NioEventLoop#processSelectedKey
-
-![](./imgs/106_netty_NioEventLoop_processSelectKey.png)
-
-- 对应，<https://segmentfault.com/q/1010000018632056/a-1020000018633929>
 
 
 
