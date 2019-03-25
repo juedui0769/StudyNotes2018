@@ -51,6 +51,14 @@
 - ![](./imgs/132_IDEA_shortcut_003.png)
 - 
 
+### 删除一整行
+
+- Eclipse 中删除一行的快捷键是 `Ctrl + D`，在 IDEA 中，`Ctrl + D` 是复制一行；
+- `Ctrl + Y` 是删除行的快捷键，在 Keymap 中搜索 "delete" 可以找到和 delete 相关的所有快捷键；
+- `Ctrl + Y` 在 Eclipse 中是 撤回， 在 IDEA 中，`Ctrl + Shift + Z`是撤回，`Ctrl + Z`是撤销；
+
+
+
 
 
 ## 多次运行main方法
