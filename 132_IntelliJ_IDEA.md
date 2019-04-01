@@ -1,19 +1,23 @@
 # Start
 
+> 这里很多设置都是针对Windows的，在Mac上可能不同，但是根据这个文档的描述还是能够找到位置修改的。
+
 ## 重新设置
 
 重装操作系统（2019年3月12日）了，所有的软件重新安装，IDEA也不例外；但是，之前的配置就都没有了。
 
 - 首先要配置的是字体，`settings`中非常好定位“Font”
-  - Editor -> Font -> Lucida Console
-  - Editor -> Font -> Source Code Pro
+  - Editor -> Font -> `Lucida Console`
+  - Editor -> Font -> `Source Code Pro`
+  - Editor -> Font -> `Menlo`
   - 以上两个字体不错，我选择的是`Source Code Pro`
+  - 在Mac上选择`Source Code Pro`不太好，字体太纤细，使用默认的`Menlo`字体比较好(2019年04月01日12:30:17添加)。
 - `Alt + /`，这个是 Eclipse 时代遗留的习惯了。IDEA中需要重新配置一下
   - 这个快捷键被 `Code -> Completion -> Cyclic Expand Word` 占用了，所以……
 - `File structure`，这个是类结构，就是 Eclipse 中的 `Ctrl + O` 。
   - 在 IDEA 中快捷键是 `Ctrl + F12`，我将其改为了 `Ctrl + O`  ；
   - 原本  `Ctrl + O` 是对应 重写方法（`Override Methods...`）的， 我将其移除了， 因为在 `Alt + Insert` 中也有 ；
-- `Reopen last project on startup`， 我不太喜欢这样，所以取消勾选了
+- √ `Reopen last project on startup`， 我不太喜欢这样，所以取消勾选了
   - `Appearance & Behavior -> System Settings -> Reopen last project on startup`
   - 可以直接在`settings`中搜索
 - 另外，在gitee中搜索之前的笔记，“Other”下有IDEA相关的笔记记录！
@@ -29,7 +33,7 @@
   - `Declaration`   可以使用 `Ctrl + 左键` 来调用，如下图：
   - ![](./imgs/132_IDEA_Implementations_shortcut_keys.png)
   - 因为以上几个操作非常，常用，所以，也都绑定了鼠标左键的快捷操作。
-- `Ctrl + U` , `Ctrl + H` , `Ctrl + F12 (Ctrl + O)` （我增加了Ctrl+O），这个几个都是常用的快捷键。
+- `Ctrl + U` , `Ctrl + H` , `Ctrl + F12 (Ctrl + O)` （我增加了Ctrl+O），这几个都是常用的快捷键。
 - 跳转不是`Alt + 左右箭头`， 而是 `Ctrl + Alt + 左右箭头` ，如下图（比较坑）：
   - ![](./imgs/132_IDEA_shortcut_002.png)
 - 给跳转加上了新的快捷键，如下
@@ -56,6 +60,7 @@
 - Eclipse 中删除一行的快捷键是 `Ctrl + D`，在 IDEA 中，`Ctrl + D` 是复制一行；
 - `Ctrl + Y` 是删除行的快捷键，在 Keymap 中搜索 "delete" 可以找到和 delete 相关的所有快捷键；
 - `Ctrl + Y` 在 Eclipse 中是 撤回， 在 IDEA 中，`Ctrl + Shift + Z`是撤回，`Ctrl + Z`是撤销；
+- Mac上是`command + delete`, 但如果选择Idea默认，那么就是`command + Y`
 
 
 
