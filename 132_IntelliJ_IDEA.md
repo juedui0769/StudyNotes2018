@@ -127,6 +127,18 @@
 >
 > - 比如，我在parent中声明了`JDK`为`1.8`，在子module中仍然是`1.6`，更改为`3.3.9`就可以修正！
 
+## Mac Java 环境变量
+
+- > objc[1312]: Class JavaLaunchHelper is implemented in both /Library/Java/JavaVirtualMachines/jdk1.8.0_91.jdk/Contents/Home/bin/java (0x10f5b24c0) and /Library/Java/JavaVirtualMachines/jdk1.8.0_91.jdk/Contents/Home/jre/lib/libinstrument.dylib (0x10f68e4e0). One of the two will be used. Which one is undefined.
+- 参考下面的博文
+    - <https://blog.csdn.net/superdangbo/article/details/79997176>
+    - <https://blog.csdn.net/lizhaowei213/article/details/68951671> ，这篇博文解释的比较清楚。
+- IDEA , Help -> Edit Customer Properties...
+    - ```
+      idea.no.launcher=true
+      ```
+
+
 
 
 # End
