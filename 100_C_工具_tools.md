@@ -19,7 +19,9 @@
 - TypeScript : <https://github.com/Microsoft/TypeScript>
   - <https://github.com/zhongsp/TypeScript>
 
+## (3) WPS Office
 
+- wps office for mac (beta5)
 
 
 
