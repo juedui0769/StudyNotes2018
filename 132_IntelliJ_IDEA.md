@@ -138,6 +138,16 @@
       idea.no.launcher=true
       ```
 
+# Other
+
+## Show method separators
+
+> Editor -> Appearance -> Show method separators
+
+> Settings -> Editor -> General -> Appearance -> Show method separators
+
+
+
 
 
 
