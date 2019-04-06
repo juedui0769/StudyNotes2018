@@ -22,14 +22,15 @@
 ## (3) WPS Office
 
 - wps office for mac (beta5)
+- 可以打开 pdf 文件。
 
-## (4) Foxit Reader
+## (4) ~~Foxit Reader~~
 
-- PDF工具，可以在 App Store 中下载。
-- 2019年04月06日09:38:05， 今天mac的默认pdf预览工具，突然-不响应了，这个默认的预览工具有毛病，早就想替换它了。
-- 在app store 找到 `Foxit Reader` 真是高兴，也不用设置安全配置了，很方便。
-- Mac中home、end、pageUp、pageDown对应的快捷键是 `fn + 左箭头`、…… 就是`fn` + 四个箭头。
-
+- ~~PDF工具，可以在 App Store 中下载。~~
+- ~~2019年04月06日09:38:05， 今天mac的默认pdf预览工具，突然-不响应了，这个默认的预览工具有毛病，早就想替换它了。~~
+- ~~在app store 找到 `Foxit Reader` 真是高兴，也不用设置安全配置了，很方便。~~
+- ~~Mac中home、end、pageUp、pageDown对应的快捷键是 `fn + 左箭头`、…… 就是`fn` + 四个箭头。~~
+- 这个软件，翻页非常慢，不如使用 `wps office for mac`
 
 
 
