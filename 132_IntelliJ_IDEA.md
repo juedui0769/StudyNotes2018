@@ -146,7 +146,11 @@
 
 > Settings -> Editor -> General -> Appearance -> Show method separators
 
+## Alt + F8
 
+> To easily evaluate the value of any expression while debugging the program, select its text in the editor (you may press a `Ctrl+W` a few times to efficiently perform this operation) and press `Alt+F8`.
+>
+> 要在调试程序时轻松计算任何表达式的值，请在编辑器中选择其文本(您可以按Ctrl+W几次以有效执行此操作)，然后按Alt+F8。
 
 
 
