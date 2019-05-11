@@ -65,6 +65,8 @@ tsc --version
 
 <https://www.tslang.cn/docs/handbook/basic-types.html>
 
+#### 枚举
+
 ```TypeScript
 enum Color {Red, Green, Blue}
 let c: Color = Color.Green;
