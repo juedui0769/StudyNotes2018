@@ -32,8 +32,13 @@ C:\Program Files\Dart
 
 ### 2 学习
 
-
-
+2019年5月11日10:15:53， 阅读完《Dart IN ACTION》第一章，值得注意的几个地方：
+- 只有一个`false`值, `0`等不是false值。
+- `Dart`是单线程的语言,但可以使用`isolate`来开发'并发'程序，各`isolate`之间是不共享内存的，通过"消息"来通讯
+- 类型是可选的。 `var`, `final` 或者 `String`, `List`, `int`
+- 函数是一等公民
+- `import`, `part` 可以引入其他的`*.dart`文件，`library`是定义当前文件为一个library，类似Java中的`package`
+- ...
 
 
 
