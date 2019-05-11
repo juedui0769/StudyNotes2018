@@ -4,7 +4,7 @@
 
 ---------------------------------
 
-### 1 旧笔记梳理
+## 1 旧笔记梳理
 
 GO语言中文网: <https://studygolang.com/>
 
@@ -20,17 +20,17 @@ gopm : 参考 <https://gitee.com/juedui0769/MyDocs/blob/master/temp/temp991_gola
 
 -----------------------------
 
-### 2 再学golang
+## 2 再学golang
 
 <https://golang.google.cn/> 这个应该是`golang`在国内的官网,首页比较干净！
 
 <https://golang.google.cn/doc/install> 这是安装说明, 在"System requirements"可以看到各环境下的安装前置。比如, 在window下需要安装`MinGW`、`gcc`(如果计划使用`cgo`的话需要安装)
 
-#### 2.1 MinGw
+### 2.1 MinGw
 
 <http://www.mingw.org/> Minimalist GNU for Windows 
 
-#### 2.2 windows下的下载和安装
+### 2.2 windows下的下载和安装
 
 在 <https://golang.google.cn/dl/> 下载`go1.12.5.windows-amd64.msi`文件。118MB，下载速度非常快(2019年5月11日18:04:01)。
 
@@ -40,9 +40,9 @@ gopm : 参考 <https://gitee.com/juedui0769/MyDocs/blob/master/temp/temp991_gola
 - ……
 - 总之，我是跳过了`2.1 MinGw`的下载和安装了。如果在新系统上出现问题，记得检查是否缺失了`2.1`这一步。
 
-#### 2.3 安装完成之后的设置
+### 2.3 安装完成之后的设置
 
-##### GOPATH
+#### GOPATH
 
 参考这个链接 : <https://golang.google.cn/doc/code.html#GOPATH>
 
@@ -65,11 +65,11 @@ D:\wxg104_Go
 >
 > 我这次修改的是"当前用户"的环境变量,没有修改"系统变量"
 
-##### workspaces
+#### workspaces
 
 <https://golang.google.cn/doc/code.html#Workspaces> , 在这个链接介绍了如何组织目录结构。
 
-#### 2.4 helloworld
+### 2.4 helloworld
 
 创建文件`D:\wxg104_Go\src\myhello\hello.go`, 代码如下:
 
@@ -85,7 +85,7 @@ func main() {
 
 在当前目录运行`go build`，编译生成一个`myhello.exe`文件，运行此exe文件输出"hello, world"。
 
-#### 2.5 go install
+### 2.5 go install
 
 参考 : <https://golang.google.cn/doc/code.html#Command>
 
@@ -93,7 +93,7 @@ func main() {
 
 如果使用`go install`命令，会在`%GOPATH%\bin`目录下生成`myhello.exe`文件。
 
-如果是在`D:\wxg104_Go\src\myhello\`目录下可以直接运行`go install`命令，如果是在其他目录可以运行~~`go install myhello/hello`~~ `go install myhello`命令，Go会去`GOPATH`寻找`myhello`目录，并编译此目录下的`*.go`文件,将生成的`myhello.exe`放到`%GOPATH%\bin`目录下。
+如果是在`D:\wxg104_Go\src\myhello\`目录下可以直接运行`go install`命令，如果是在其他目录可以运行 ~~`go install myhello/hello`~~ `go install myhello`命令，Go会去`GOPATH`寻找`myhello`目录，并编译此目录下的`*.go`文件,将生成的`myhello.exe`放到`%GOPATH%\bin`目录下。
 
 因为`%GOPATH%\bin`目录已经被我设置到当前用户的`path`环境变量下了。所以我可以在任意目录下运行`myhello`，这将会输出"hello, world! welcome to golang!"
 
