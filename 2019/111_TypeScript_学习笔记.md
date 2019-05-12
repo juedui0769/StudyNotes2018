@@ -128,6 +128,18 @@ I'll be ${age+1} years old next month.`;
 
 <https://www.tslang.cn/docs/handbook/variable-declarations.html>
 
+-------------------------
+
+> 看基础很无聊…… 要仔细看完并看懂不容易，我是个心急的人，等不到看完基础，还是觉得边实战边查字典是最适合我的方式。
+> 
+> 所以选择从这个链接中 <https://www.tslang.cn/samples/index.html> 选择一个实战。
+
+## 4 实战
+
+### 4.1 TypeScript React Starter
+
+<https://github.com/Microsoft/TypeScript-React-Starter#typescript-react-starter>
+
 
 
 
