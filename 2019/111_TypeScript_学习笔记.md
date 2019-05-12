@@ -93,6 +93,45 @@ var Color;
 console.log(Color);
 ```
 
+#### 字符串
+
+在TypeScript中可以使用反引号( &#96; )来定义多行文本，支持内嵌表达式。
+
+```TypeScript
+let name: string = `Gene`;
+let age: number = 37;
+let sentence: string = `Hello, my name is ${name}.
+I'll be ${age+1} years old next month.`;
+```
+
+> ## 如何在MarkDown文件中输出特殊字符？
+> 比如输出反引号 **&#96;** ，可以写一段程序来帮助我们
+> ```
+> var str = "`";
+> console.log(str.charCodeAt(0));
+> console.log("&#" + str.charCodeAt(0) + ";");
+> ```
+> 上面代码的输出结果为 `96`, `&#96;`
+> 
+> `&#96;`就是 &#96; 的表示，其他的特殊字符也可以使用这种方式来确认！
+> 
+> `String.charCodeAt(index:number)` 可以参考MDN文档: <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String/charCodeAt>
+
+#### 其他
+
+`元组`, `any`, `void`, `undefined`, `null`, `never`, `object`
+
+这些都比较好理解，看一遍文档就明白了，忘记了，前往文档复习巩固一下即可！
+
+
+### 3.3 变量声明
+
+<https://www.tslang.cn/docs/handbook/variable-declarations.html>
+
+
+
+
+
 
 
 
