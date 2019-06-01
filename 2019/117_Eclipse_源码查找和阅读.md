@@ -69,6 +69,8 @@ Subsequent errors may happen and may terminate the workbench without warning.
 
 可以查看Eclipse安装目录下的readme目录下的"readme_eclipse.html"文件中的 "Running Eclipse" 一节来了解详情。
 
+[The Eclipse runtime options](https://help.eclipse.org/mars/index.jsp?topic=/org.eclipse.platform.doc.isv/reference/misc/runtime-options.html)
+
 #### eclipse.ini
 
 实际上修改`eclipse.ini`文件是最便利的。
@@ -96,6 +98,76 @@ openFile
 -Xms40m
 -Xmx512m
 ```
+
+参考此链接 <https://wiki.eclipse.org/Eclipse.ini>， 这里讲解得比较详细，值得阅读！
+
+**[FAQ How do I increase the heap size available to Eclipse?](https://wiki.eclipse.org/FAQ_How_do_I_increase_the_heap_size_available_to_Eclipse%3F)**
+
+```
+-startup
+plugins/org.eclipse.equinox.launcher_1.3.0.v20140415-2008.jar
+--launcher.library
+plugins/org.eclipse.equinox.launcher.win32.win32.x86_64_1.1.200.v20140603-1326
+-product
+org.eclipse.epp.package.jee.product
+--launcher.defaultAction
+openFile
+--launcher.XXMaxPermSize
+256M
+-showsplash
+org.eclipse.platform
+--launcher.XXMaxPermSize
+256m
+--launcher.defaultAction
+openFile
+--launcher.appendVmargs
+-vm
+C:\Java\jdk1.8.0_191\bin\javaw.exe
+-vmargs
+-Dosgi.requiredJavaVersion=1.6
+-Xms512m
+-Xmx1024m
+-XX:+UseParallelGC
+-XX:PermSize=256M
+-XX:MaxPermSize=512M
+```
+
+参考上面的, 修改的如下:
+
+```
+-vm
+C:\Java\jdk1.8.0_191\bin\javaw.exe
+-vmargs
+-Dosgi.requiredJavaVersion=1.6
+-Xms512m
+-Xmx1024m
+-XX:+UseParallelGC
+-XX:PermSize=256M
+-XX:MaxPermSize=512M
+```
+
+**[FAQ How do I increase the permgen size available to Eclipse?](https://wiki.eclipse.org/FAQ_How_do_I_increase_the_permgen_size_available_to_Eclipse%3F)**
+
+Note: Oracle Java 8 does not have a separate permanent generation space any more. The -XX:(Max)PermSize option makes no difference (the JVM will ignore it, so it can still be present). -> 注意：Oracle Java 8不再有单独的永久生成空间。-XX：(Max)PermSize选项没有区别(JVM将忽略它，因此它仍然存在)。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
